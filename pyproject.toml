@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "psyscientist"
+version = "0.1.0"
+description = "An auditable, AI-assisted pipeline for scoping reviews in psychology: search, screening, charting, findings with verbatim evidence, checked manuscripts and human check packs."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []                      # the standard library only
+
+[project.optional-dependencies]
+pdf = ["pypdf"]                        # reading PDFs when GROBID is not running
+
+[project.scripts]
+psyscientist = "psyscientist.__main__:main"
+
+[project.gui-scripts]
+psyscientist-app = "psyscientist.desktop:main"
+
+[tool.setuptools]
+packages = ["psyscientist", "psyscientist.sources"]
+
+[tool.setuptools.package-data]
+psyscientist = ["assets/*"]

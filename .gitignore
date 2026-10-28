@@ -1,0 +1,25 @@
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+fulltext/
+
+# the evidence store and its backups: too large for git, and they hold full-text passages; back them up separately
+data/
+
+# rebuilt from the evidence store: reports, review pages, agent tasks, manuscripts, app.log
+output/
+
+# the desktop window's own browser profile
+.app-window/
+
+# this machine's preview servers
+.claude/launch.json
+
+# research records: kept on this computer, not in the public repo (examples/ has a neutral protocol)
+protocol/
+imports/
+notes/
+writing/
+HANDOFF.md

@@ -1,0 +1,461 @@
+# Example protocol (corpus A): analog settings, meaning and purpose after work ends.
+#
+# You own this file. Every run stores its full text and SHA-256 hash in the
+# evidence store, so edit freely while tuning on the pilot, then freeze it for
+# the OSF preregistration.
+
+corpus = "A"
+title = "Analog settings: meaning and purpose after work ends"
+version = "0.7-pilot"
+
+# Canonical string: AND / OR / NOT, "phrases", trailing * for truncation.
+# Searched in titles and abstracts only; rendered mechanically for each source.
+# Operators must be written out (no implicit AND); commas are not allowed.
+query = '''
+("meaning in life" OR "purpose in life" OR "meaningful work" OR "work identity" OR "work centrality")
+AND (unemploy* OR "job loss" OR retire* OR furlough* OR "short-time work" OR underemploy* OR NEET OR "school-to-work")
+AND (longitudinal OR panel OR trajector* OR prospective)
+'''
+# Names for the string's concept blocks, in order; the review page highlights each in its own colour.
+query_blocks = ["construct", "setting", "design"]
+
+sources = ["openalex", "semantic_scholar", "pubmed", "europepmc"]
+
+[pilot]
+max_records_per_source = 2000   # retrieval stops here and the report flags it
+sample_size = 200               # records on the screening sheet
+seed = 20261016                 # fixed, so the same pool always gives the same sheet
+
+[screening]
+stage = "title_abstract"
+# Draft wording of the September scope rule; tighten it before preregistering.
+rule = """
+Include: an empirical study with a longitudinal design (two or more waves, or
+prospective) of people whose work ended or never began (job loss, furlough or
+short-time work, retirement, youth unemployment or NEET status,
+underemployment), with an outcome on meaning in life, purpose in life,
+meaningful work or work identity, that reports subgroups, trajectories or
+moderators. Exclude cross-sectional studies.
+Studies using Health and Retirement Study data that do not study the
+retirement transition are excluded as wrong_setting.
+At title and abstract stage, choose unsure when the abstract does not say
+whether subgroups, trajectories or moderators are reported.
+"""
+decisions = ["include", "exclude", "unsure"]
+exclude_reasons = [
+    "not_empirical",        # theory, commentary, protocol
+    "review",               # review or meta-analysis: exclude, but mine its references
+    "cross_sectional",
+    "no_meaning_outcome",
+    "wrong_setting",        # work did not end or was never in question
+    "no_heterogeneity",     # clearly no subgroups, trajectories or moderators
+    "other",                # explain in the note column
+]
+
+# Metrics for agent screeners. Each record gets 0 (clearly not met), 1 (cannot
+# tell) or 2 (clearly met) per metric, with a quote. The pipeline, not the
+# agent, decides: the first metric scored 0, in this order, excludes with its
+# fail_reason; all 2 includes; anything else is unsure.
+[[screening.metrics]]
+id = "empirical"
+question = "Is it an original empirical study with its own data, not a review, theory piece, editorial, protocol, book or proceedings?"
+fail_reason = "not_empirical"
+review_reason = "review"
+
+[[screening.metrics]]
+id = "setting"
+question = """Are the participants defined by work ending or never beginning: job loss or unemployment,
+furlough or short-time work, the retirement transition, youth unemployment, NEET or school-to-work,
+or underemployment? Health and Retirement Study papers that do not study the retirement transition,
+and general older-adult samples, score 0."""
+fail_reason = "wrong_setting"
+
+[[screening.metrics]]
+id = "outcome"
+question = "Is meaning in life, purpose in life, meaningful work or work identity measured as an outcome, not only as a predictor of something else?"
+fail_reason = "no_meaning_outcome"
+
+[[screening.metrics]]
+id = "design"
+question = "Is the design longitudinal: two or more measurement waves, or prospective?"
+fail_reason = "cross_sectional"
+
+[[screening.metrics]]
+id = "heterogeneity"
+question = "Does it report subgroups, trajectories (including trajectory classes or change over a transition) or moderators?"
+fail_reason = "no_heterogeneity"
+
+# Optional: extend the built-in signal word lists (trajectory, heterogeneity,
+# longitudinal, cross_sectional) or add your own; see psyscientist/signals.py.
+[signals.add]
+trajectory = ["before and after retirement", "after job loss"]
+
+# The evidence map: what the extraction agent records for every kept study,
+# and how studies are matched. Draft for corpus A; any domain works the same
+# way with its own dimensions.
+[map]
+tree = ["setting", "construct", "measure", "design"]
+match_across = "setting"                       # compare studies that differ here ...
+match_on = ["construct", "measure", "design"]  # ... but agree on these
+
+[[map.dimensions]]
+name = "setting"
+question = "In which situation of work ending or never beginning are the participants?"
+categories = ["job_loss", "furlough", "retirement", "youth_never_employed", "underemployment", "other"]
+
+[[map.dimensions]]
+name = "construct"
+question = "Which meaning-related construct is the outcome?"
+categories = ["meaning_in_life", "purpose_in_life", "meaningful_work", "work_identity", "work_centrality", "other"]
+
+[[map.dimensions]]
+name = "measure"
+question = "Which instrument measured that construct? Give its usual short name, e.g. mlq for the Meaning in Life Questionnaire or ryff pwb purpose for the Ryff purpose subscale."
+
+[[map.dimensions]]
+name = "design"
+question = "What longitudinal design was used?"
+categories = ["two_waves", "three_plus_waves", "prospective_cohort", "intensive_longitudinal", "qualitative_longitudinal", "intervention", "other"]
+
+[[map.dimensions]]
+name = "analysis"
+question = "How was change or heterogeneity analysed?"
+categories = ["growth_model", "growth_mixture_or_latent_class", "multilevel", "fixed_effects", "change_scores", "moderation", "qualitative", "other"]
+
+[[map.dimensions]]
+name = "heterogeneity"
+question = "Which subgroups, moderators or trajectory classes are reported? List them briefly."
+
+[[map.dimensions]]
+name = "substitute"
+question = "What, if anything, is reported to replace work as a source of meaning (e.g. volunteering, family, leisure)?"
+
+[[map.dimensions]]
+name = "population"
+question = "Who was studied: age range and country?"
+
+# Merge labels that mean the same thing after a first extraction (see the
+# vocabulary at the end of the report's evidence map).
+[map.aliases.measure]
+"qualitative interviews" = "qualitative interview"
+
+# Findings: one row per result of a kept study, with the passage that states
+# it. `question` steers what counts as relevant; `fields` are recorded per
+# finding (categories are checked); `matrix` picks two of them for the report.
+[findings]
+question = """What happens to meaning in life, purpose or work identity when work ends or never begins,
+for whom, and what replaces work as a source of meaning?"""
+max_per_study = 6
+matrix = ["setting", "direction"]
+
+[[findings.fields]]
+name = "setting"
+question = "The situation of the people the finding is about."
+categories = ["job_loss", "furlough", "retirement", "youth_never_employed", "underemployment", "other"]
+
+[[findings.fields]]
+name = "predictor"
+question = "What the finding relates the outcome to, compares or tracks it across: the predictor, condition, group contrast or transition (for example 'retirement vs continued work', 'work centrality', 'volunteering intervention'). A few words."
+
+[[findings.fields]]
+name = "outcome"
+question = "The outcome: what is predicted or what changes, never the predictor. Depressive symptoms, anxiety, grief and psychological distress are distress."
+categories = ["meaning_in_life", "purpose_in_life", "meaningful_work", "work_identity", "work_centrality", "well_being", "distress", "other"]
+
+[[findings.fields]]
+name = "direction"
+question = "What happened to that outcome, or how it was related to something else."
+categories = ["increase", "decrease", "no_change", "mixed", "differs_by_group", "association"]
+
+[[findings.fields]]
+name = "sign"
+question = "The sign of the relation between predictor and outcome: positive (more of the predictor, more of the outcome; or the outcome rose after the transition), negative, null (no reliable relation or change), mixed (differs by subgroup or measure), or not_applicable."
+categories = ["positive", "negative", "null", "mixed", "not_applicable"]
+
+[[findings.fields]]
+name = "substitute"
+question = "What replaced work as a source of meaning in this finding, if anything; empty if nothing."
+
+# What the evidence-first writer drafts. Every sentence must cite finding rows;
+# the pipeline checks each one.
+[writing]
+section = "the results section of a conceptual review: what happens to meaning when work ends or never begins, for whom, and what replaces work as a source of meaning"
+words = "1000 to 1500"
+
+# The full paper: authors and what the reviewers judge it by.
+[paper]
+authors = [{name = "Your Name", affiliation = "Your University"}]
+kind = "scoping review"
+target = "a peer-reviewed psychology journal that publishes conceptual and scoping reviews"
+
+# The parts of the paper whose findings you check in the app's Check findings
+# tab (section names, or paragraph headings within a section).
+headline = ["Abstract", "Principal findings", "Implications", "Conclusion"]
+
+# Rules for the writer that belong to this corpus (added to the generic ones).
+rules = ["Many findings concern older adults in general (setting `other`): keep them apart as context, never as evidence about losing work."]
+
+# Your own statements for the Declarations section; until you fill them in,
+# the paper says "[To be stated by the author.]". `accountability` is added
+# to the Declaration of AI use.
+# [paper.declarations]
+# funding = "..."
+# ethics = "..."
+# competing_interests = "..."
+# credit = "..."
+# data = "Materials are deposited at https://doi.org/..."
+# accountability = "..."
+
+# Full names for the names you type in the app, as the Declaration should
+# give them.
+[paper.names]
+yourname = "Your Name"
+
+# Core studies: retained records whose charting meets every inclusion
+# criterion. Each criterion names a charted map dimension and the values that
+# meet it ("any" = anything reported) and, optionally, the screening metric
+# whose score 0 at title and abstract also counts against it. The paper
+# answers the review question from the core first; Table 2 shows every
+# retained record against these criteria. `fails` labels the records that do
+# not meet the criterion.
+[[paper.core]]
+id = "empirical"
+short = "empirical"
+label = "an original empirical study reporting results (an analysis was charted)"
+dimension = "analysis"
+values = "any"
+metric = "empirical"
+fail_types = ["dataset", "review", "editorial"]
+fails = "not an original empirical study, or no results of its own"
+
+[[paper.core]]
+id = "setting"
+short = "setting"
+label = "work ends or never begins"
+dimension = "setting"
+values = ["job_loss", "furlough", "retirement", "youth_never_employed", "underemployment"]
+metric = "setting"
+fails = "outside the settings (incl. general older-adult samples)"
+
+[[paper.core]]
+id = "outcome"
+short = "outcome"
+label = "meaning in life, purpose, meaningful work or work identity as an outcome"
+dimension = "construct"
+values = ["meaning_in_life", "purpose_in_life", "meaningful_work", "work_identity"]
+metric = "outcome"
+fails = "meaning not an outcome (absent, or only predictor or correlate)"
+
+[[paper.core]]
+id = "design"
+short = "design"
+label = "longitudinal (two or more waves, or prospective)"
+dimension = "design"
+values = ["two_waves", "three_plus_waves", "prospective_cohort", "intensive_longitudinal", "qualitative_longitudinal", "intervention"]
+metric = "design"
+fails = "not longitudinal"
+
+[[paper.core]]
+id = "heterogeneity"
+short = "heterogeneity"
+label = "subgroups, trajectories or moderators reported"
+dimension = "heterogeneity"
+values = "any"
+metric = "heterogeneity"
+fail_types = ["dataset"]
+fails = "no heterogeneity reported"
+
+# Deviations from this protocol that you want reported in the Method, besides
+# the ones the pipeline finds itself. Example format:
+# [[deviations]]
+# date = "2026-10-17"
+# who = "author"
+# what = "Records that fail the setting criterion were retained as context."
+# why = "Your reason."
+
+# Background sources the paper may cite beyond the extracted findings (mainly in
+# the introduction and discussion). The writer may claim from a source only
+# what its `claim` says. `checked` records how far it was verified; check each
+# against the source itself before submission.
+[[background]]
+id = "B1"
+cite = "Brynjolfsson, Chandar & Chen, 2025"
+reference = "Brynjolfsson, E., Chandar, B., & Chen, R. (2025). *Canaries in the coal mine? Six facts about the recent employment effects of artificial intelligence* [Working paper]. Stanford Digital Economy Lab."
+claim = "Since the spread of generative AI, employment of early-career workers aged 22 to 25 in the most AI-exposed occupations fell by 13% relative to less-exposed occupations."
+checked = "Known working paper (August 2025); not indexed in OpenAlex. A 2026 update cited in the blueprint could not be checked and is not used."
+
+[[background]]
+id = "B2"
+cite = "Jahoda, 1982"
+reference = "Jahoda, M. (1982). *Employment and unemployment: A social-psychological analysis*. Cambridge University Press."
+claim = "Besides income, employment provides latent functions (time structure, social contact, collective purpose, status and identity, regular activity), and their loss helps explain the psychological harm of unemployment."
+checked = "Classic monograph; not checked against the text by the pipeline."
+
+[[background]]
+id = "B3"
+cite = "Atchley, 1989"
+reference = "Atchley, R. C. (1989). A continuity theory of normal aging. *The Gerontologist*, *29*(2), 183–190."
+claim = "Continuity theory holds that people adapt to later-life transitions by preserving existing internal and external structures, such as identities, roles and activities."
+checked = "Classic article; not checked against the text by the pipeline."
+
+[[background]]
+id = "B4"
+cite = "Pieper, 1952"
+reference = "Pieper, J. (1952). *Leisure: The basis of culture* (A. Dru, Trans.). Faber and Faber. (Original work published 1948)"
+claim = "Pieper criticised a world of 'total work' and argued that leisure, not work, is the basis of culture."
+checked = "Classic text; not checked against the text by the pipeline. Quote only from your own reading."
+
+[[background]]
+id = "B5"
+cite = "Aristotle, ca. 350 B.C.E./2009"
+reference = "Aristotle. (2009). *The Nicomachean ethics* (D. Ross, Trans.; L. Brown, Rev.). Oxford University Press. (Original work written ca. 350 B.C.E.; cited passage: Book X, chapter 7, 1177b4–6)"
+claim = "Aristotle treats work as being for the sake of leisure (schole): we are busy so that we may have leisure."
+checked = "Standard reading of the cited passage. The edition (Ross translation revised by Brown, Oxford World's Classics) was chosen by the pipeline; replace it with the translation you read and check the wording against it."
+
+[[background]]
+id = "B6"
+cite = "Danaher, 2017"
+reference = "Danaher, J. (2017). Will life be worth living in a world without work? Technological unemployment and the meaning of life. *Science and Engineering Ethics*, *23*(1), 41–64. https://doi.org/10.1007/s11948-016-9770-5"
+claim = "Danaher argues that a world without work could still offer meaningful lives, depending on how people relate to the technology that replaces their work."
+checked = "OpenAlex record found 2026-10-17; claim from the blueprint's summary, not checked against the text."
+
+[[background]]
+id = "B7"
+cite = "Knell & Rüther, 2024"
+reference = "Knell, S., & Rüther, M. (2024). Artificial intelligence, superefficiency and the end of work: A humanistic perspective on meaning in life. *AI and Ethics*, *4*(2), 363–373. https://doi.org/10.1007/s43681-023-00273-w"
+claim = "From a humanistic perspective, Knell and Rüther ask what could give life meaning if AI ended wage work, and point to activities such as care, education and engagement with science and the arts."
+checked = "OpenAlex record found 2026-10-17 (online 2023); claim from the blueprint's summary, not checked against the text; volume and pages unverified."
+
+[[background]]
+id = "B8"
+cite = "Bankins & Formosa, 2023"
+reference = "Bankins, S., & Formosa, P. (2023). The ethical implications of artificial intelligence (AI) for meaningful work. *Journal of Business Ethics*, *185*(4), 725–740. https://doi.org/10.1007/s10551-023-05339-7"
+claim = "Bankins and Formosa analyse how AI in the workplace can enhance or diminish the meaningfulness of work for people who remain employed."
+checked = "OpenAlex record found 2026-10-17; claim from the blueprint's summary; volume and pages unverified."
+
+[[background]]
+id = "B9"
+cite = "Shekhar & Saurombe, 2026"
+reference = "Shekhar, A., & Saurombe, M. D. (2026). Algorithmic anxiety: AI, work, and the evolving psychological contract in digital discourse. *Frontiers in Psychology*, *17*, Article 1745164. https://doi.org/10.3389/fpsyg.2026.1745164"
+claim = "An analysis of online discourse by people affected by AI at work describes 'algorithmic anxiety', with erosion of identity and meaning among its themes."
+checked = "OpenAlex record found 2026-10-17; claim from the blueprint's summary, not checked against the text."
+
+[[background]]
+id = "B10"
+cite = "Chen et al., 2026"
+reference = "Chen, S. F., Alyakin, A., Seas, A., et al. (2026). LLM-assisted systematic review of large language models in clinical medicine. *Nature Medicine*, *32*(3), 1152–1159. https://doi.org/10.1038/s41591-026-04229-5"
+claim = "A systematic review in clinical medicine used a large language model to screen records and compared its decisions with human screeners."
+checked = "OpenAlex record found 2026-10-17; agreement statistics from the blueprint not checked and not used."
+
+[[background]]
+id = "B11"
+cite = "Arksey & O'Malley, 2005"
+reference = "Arksey, H., & O'Malley, L. (2005). Scoping studies: Towards a methodological framework. *International Journal of Social Research Methodology*, *8*(1), 19–32."
+claim = "Scoping reviews map the extent, range and nature of research on a topic and identify gaps, following stages from identifying the question to charting and summarising results."
+checked = "Standard methods reference; not checked against the text by the pipeline."
+
+[[background]]
+id = "B12"
+cite = "Tricco et al., 2018"
+reference = "Tricco, A. C., Lillie, E., Zarin, W., et al. (2018). PRISMA extension for scoping reviews (PRISMA-ScR): Checklist and explanation. *Annals of Internal Medicine*, *169*(7), 467–473."
+claim = "PRISMA-ScR is the reporting checklist for scoping reviews."
+checked = "Standard methods reference; not checked against the text by the pipeline."
+
+[[background]]
+id = "B13"
+cite = "Fryer, 1986"
+reference = "Fryer, D. (1986). Employment deprivation and personal agency during unemployment: A critical discussion of Jahoda's explanation of the psychological effects of unemployment. *Social Behaviour*, *1*(1), 3–23."
+claim = "Fryer argued, against Jahoda, that unemployment harms people mainly by restricting their agency (poverty and insecurity limit their capacity to plan and act), rather than by depriving them of employment's latent functions."
+checked = "Classic article, added after peer review asked for it; not checked against the text by the pipeline."
+
+[[background]]
+id = "B14"
+cite = "Markus & Nurius, 1986"
+reference = "Markus, H., & Nurius, P. (1986). Possible selves. *American Psychologist*, *41*(9), 954–969."
+claim = "People hold representations of who they might become (possible selves), which motivate and guide action, including selves they hope for and selves they fear."
+checked = "Classic article, added after peer review asked for it; not checked against the text by the pipeline."
+
+# Prior syntheses and frameworks the review does not engage. Bibliographic
+# details were checked on 2026-10-17 (Crossref for the articles; published
+# book reviews for the two books), but their content was not read for this
+# review: cite them only to name what the review leaves out.
+[[background]]
+id = "B15"
+cite = "Paul & Moser, 2009"
+reference = "Paul, K. I., & Moser, K. (2009). Unemployment impairs mental health: Meta-analyses. *Journal of Vocational Behavior*, *74*(3), 264–282. https://doi.org/10.1016/j.jvb.2009.01.001"
+claim = "A set of meta-analyses on unemployment and mental health."
+checked = "Bibliographic record checked in Crossref, 2026-10-17; content not read for this review. Cite only as not engaged."
+
+[[background]]
+id = "B16"
+cite = "McKee-Ryan et al., 2005"
+reference = "McKee-Ryan, F., Song, Z., Wanberg, C. R., & Kinicki, A. J. (2005). Psychological and physical well-being during unemployment: A meta-analytic study. *Journal of Applied Psychology*, *90*(1), 53–76. https://doi.org/10.1037/0021-9010.90.1.53"
+claim = "A meta-analysis of psychological and physical well-being during unemployment."
+checked = "Bibliographic record checked in Crossref, 2026-10-17; content not read for this review. Cite only as not engaged."
+
+[[background]]
+id = "B17"
+cite = "Warr, 1987"
+reference = "Warr, P. (1987). *Work, unemployment, and mental health*. Oxford University Press."
+claim = "A book-length psychological account of how work and unemployment affect mental health."
+checked = "Existence and publisher checked through published book reviews indexed in OpenAlex, 2026-10-17; content not read for this review. Cite only as not engaged."
+
+[[background]]
+id = "B18"
+cite = "Ebaugh, 1988"
+reference = "Ebaugh, H. R. F. (1988). *Becoming an ex: The process of role exit*. University of Chicago Press."
+claim = "A book-length account of role exit, leaving a central role, as a process."
+checked = "Existence and publisher checked through published book reviews indexed in OpenAlex, 2026-10-17; content not read for this review. Cite only as not engaged."
+
+[[background]]
+id = "B19"
+cite = "Haslam, Haslam, et al., 2021"
+reference = "Haslam, C., Haslam, S. A., Jetten, J., Cruwys, T., & Steffens, N. K. (2021). Life change, social identity, and health. *Annual Review of Psychology*, *72*, 635–661. https://doi.org/10.1146/annurev-psych-060120-111721"
+claim = "A review of how social identities bear on health during life change."
+checked = "Bibliographic record checked in Crossref, 2026-10-17; content not read for this review. Cite only as not engaged. Not the retained study on retired athletes by Haslam et al. (2021)."
+
+[[background]]
+id = "B20"
+cite = "Wang & Shi, 2014"
+reference = "Wang, M., & Shi, J. (2014). Psychological research on retirement. *Annual Review of Psychology*, *65*, 209–233. https://doi.org/10.1146/annurev-psych-010213-115131"
+claim = "A review of psychological research on retirement."
+checked = "Bibliographic record checked in Crossref, 2026-10-17; content not read for this review. Cite only as not engaged."
+
+[[background]]
+id = "B21"
+cite = "Park, 2010"
+reference = "Park, C. L. (2010). Making sense of the meaning literature: An integrative review of meaning making and its effects on adjustment to stressful life events. *Psychological Bulletin*, *136*(2), 257–301. https://doi.org/10.1037/a0018301"
+claim = "An integrative review of meaning making and its effects on adjustment to stressful life events."
+checked = "Bibliographic record checked in Crossref, 2026-10-17; content not read for this review. Cite only as not engaged."
+
+# Corrections to bibliographic records from the sources, applied before a
+# paper is written. Name the record by doi, openalex_id, s2_id or pmid and set
+# authors, title, year, venue or type.
+[[metadata.fix]]
+doi = "10.4321/s1576-59622008000300002"
+authors = ["Kerstin Isaksson", "Gunn Johansson"]
+venue = "Revista de Psicología del Trabajo y de las Organizaciones"
+note = "OpenAlex, Semantic Scholar and Crossref run the two author names together (checked 2026-10-17)."
+
+[[metadata.fix]]
+doi = "10.4337/9781788118798.00009"
+type = "book-chapter"
+note = "A chapter in Negotiating Early Job Insecurity (Edward Elgar), per Crossref (checked 2026-10-17)."
+
+[[metadata.fix]]
+doi = "10.17192/z2017.0781"
+language = "de"
+note = "German-language thesis that OpenAlex lists as English; keeps its German capitalisation in the references."
+
+# Your philosophy claims. The extraction agent proposes which studies support,
+# challenge or qualify each one; you write the claims yourself. Example format:
+# [[claims]]
+# id = "pieper_total_work"
+# source = "Pieper, Leisure: The Basis of Culture"
+# locator = "ch. 1"
+# claim = "Where work is total, losing it leaves no other source of meaning."
+
+[seeds]
+# DOIs of papers you know belong in corpus A. The report lists any the
+# string misses, which is the quickest way to find gaps in it.
+dois = []
