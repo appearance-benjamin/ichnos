@@ -456,7 +456,7 @@ PAGE = r"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Psych-Scientist</title>
+<title>Ichnos</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256' width='256' height='256'%3E  %3Cdefs%3E    %3ClinearGradient id='bg' x1='0' y1='0' x2='1' y2='1'%3E      %3Cstop offset='0' stop-color='%234361ee'/%3E      %3Cstop offset='1' stop-color='%235a2fc2'/%3E    %3C/linearGradient%3E  %3C/defs%3E  %3Crect x='8' y='8' width='240' height='240' rx='56' fill='url(%23bg)'/%3E  %3Cg fill='none' stroke='%23ffffff' stroke-width='22' stroke-linecap='round' stroke-linejoin='round'%3E    %3Cpath d='M128 50 V206'/%3E    %3Cpath d='M66 70 V104 C66 146 94 166 128 166 C162 166 190 146 190 104 V70'/%3E    %3Cpath d='M98 206 H158'/%3E  %3C/g%3E  %3Ccircle cx='196' cy='196' r='42' fill='%2322a05a' stroke='%23ffffff' stroke-width='10'/%3E  %3Cpath d='M176 197 L190 211 L217 182' fill='none' stroke='%23ffffff' stroke-width='12' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
@@ -779,7 +779,7 @@ dl.test dd { margin: 0; }
 <body>
 <div class="shell">
 <aside class="side" id="side">
-  <div class="brand"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="28" height="28" aria-hidden="true"> <defs>  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">   <stop offset="0" stop-color="#4361ee"/>   <stop offset="1" stop-color="#5a2fc2"/>  </linearGradient> </defs> <rect x="8" y="8" width="240" height="240" rx="56" fill="url(#bg)"/> <g fill="none" stroke="#ffffff" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">  <path d="M128 50 V206"/>  <path d="M66 70 V104 C66 146 94 166 128 166 C162 166 190 146 190 104 V70"/>  <path d="M98 206 H158"/> </g> <circle cx="196" cy="196" r="42" fill="#22a05a" stroke="#ffffff" stroke-width="10"/> <path d="M176 197 L190 211 L217 182" fill="none" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Psych-Scientist</span></div>
+  <div class="brand"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="28" height="28" aria-hidden="true"> <defs>  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">   <stop offset="0" stop-color="#4361ee"/>   <stop offset="1" stop-color="#5a2fc2"/>  </linearGradient> </defs> <rect x="8" y="8" width="240" height="240" rx="56" fill="url(#bg)"/> <g fill="none" stroke="#ffffff" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">  <path d="M128 50 V206"/>  <path d="M66 70 V104 C66 146 94 166 128 166 C162 166 190 146 190 104 V70"/>  <path d="M98 206 H158"/> </g> <circle cx="196" cy="196" r="42" fill="#22a05a" stroke="#ffffff" stroke-width="10"/> <path d="M176 197 L190 211 L217 182" fill="none" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Ichnos</span></div>
   <div class="project">
     <a class="back" id="allproj" href="/" hidden>&larr; All projects</a>
     <span class="lab">Project</span>
@@ -817,7 +817,7 @@ dl.test dd { margin: 0; }
       <span class="meta" id="saved">Changes are saved as you make them.</span>
     </div>
     <div id="staticbar" hidden><span class="warn">Read-only copy.</span>
-      <span class="meta">To save decisions and checks, open the Psych-Scientist app.</span></div>
+      <span class="meta">To save decisions and checks, open the Ichnos app.</span></div>
     <span class="meta" id="jobs"></span>
   </div>
 </aside>
@@ -889,7 +889,7 @@ const KEY = "psyscientist:" + D.corpus + ":run" + D.run;
 const load = (k, f) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : f; } catch (e) { return f; } };
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
-// LIVE: served by the app (python -m psyscientist app); changes go straight into the evidence store.
+// LIVE: served by the app (python -m ichnos app); changes go straight into the evidence store.
 const LIVE = JSON.parse(document.getElementById("live").textContent);
 const mine = LIVE ? {} : load(KEY + ":decisions", {});
 for (const [id, h] of Object.entries(D.human)) if (!mine[id]) mine[id] = {d: h.d, r: h.r || "", n: h.n || ""};
@@ -916,7 +916,7 @@ async function persist(id) {
     await api("/api/decision", {run: D.run, work_id: +id, reviewer: reviewer(), decision: m.d || "", reason: m.r || null, note: m.n || null});
     if (card) card.querySelector("[data-reason]").classList.remove("pending");
     toast(m.d ? "Saved: " + m.d + (m.r ? " (" + m.r + ")" : "") : "Decision removed");
-  } catch (e) { toast("Not saved: " + (e.message.includes("fetch") ? "the app is not running. Double-click Psych-Scientist.bat and reload this page." : e.message), true); }
+  } catch (e) { toast("Not saved: " + (e.message.includes("fetch") ? "the app is not running. Double-click Ichnos.bat and reload this page." : e.message), true); }
 }
 const st = Object.assign({tab: "home", filter: "needs", level: "any", q: "", blind: false, focus: 0}, load(KEY + ":view", {}));
 const byId = Object.fromEntries(D.records.map(r => [r.id, r]));
@@ -1153,7 +1153,7 @@ function showTab() {
   document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === st.tab));
   document.getElementById("pagetitle").textContent = PAGES[st.tab][0];
   document.getElementById("pagehint").textContent = PAGES[st.tab][1];
-  document.title = PAGES[st.tab][0] + " · " + ((D.project && D.project.name) || "Psych-Scientist");
+  document.title = PAGES[st.tab][0] + " · " + ((D.project && D.project.name) || "Ichnos");
   const screening = st.tab === "records" || st.tab === "map";
   document.getElementById("blindbox").hidden = !screening;
   document.getElementById("export").hidden = !!LIVE || st.tab !== "records";
@@ -1180,7 +1180,7 @@ function openOutside(url) {
   // not answer (its window was closed or it stopped), open it here instead and say so.
   if (LIVE) api("/api/open-url", {url}).catch(() => {
     window.open(url, "_blank", "noopener");
-    toast("The app is not answering, so the link opened here. Reopen Psych-Scientist (its shortcut) before you save anything.", true);
+    toast("The app is not answering, so the link opened here. Reopen Ichnos (its shortcut) before you save anything.", true);
   });
   else window.open(url, "_blank", "noopener");
 }
@@ -1454,7 +1454,7 @@ function renderInsights() {
           (q.grounded === false ? ' <span class="ungrounded">not found</span>' : "")).join("; ") + "</span>" : "") +
         ((i.unverified_numbers || []).length ? '<br><span class="ungrounded">⚠ numbers not in the cited findings: ' + esc(i.unverified_numbers.join(", ")) + "</span>" : "") +
         editor(i) + "</div>").join("") +
-      "</section>").join("") + '<p class="hint">' + (LIVE ? "Every status change is kept with its date, your name and note. " : "Change a status with <code>python -m psyscientist insight status &lt;id&gt; supported</code>, or open the app. ") +
+      "</section>").join("") + '<p class="hint">' + (LIVE ? "Every status change is kept with its date, your name and note. " : "Change a status with <code>python -m ichnos insight status &lt;id&gt; supported</code>, or open the app. ") +
       "The full history is in notes/insights_corpus_" + esc(D.corpus) + ".md.</p>";
   }
   if (!LIVE) return;
@@ -1473,7 +1473,7 @@ function renderInsights() {
         " insights. Picking a status saves it at once; a note is saved when you leave its field.";
     } catch (e) {
       ok.textContent = "✗ not saved"; ok.className = "ungrounded";
-      toast("Not saved: " + (e.message.includes("fetch") ? "the app is not running. Double-click Psych-Scientist.bat and reload this page." : e.message), true);
+      toast("Not saved: " + (e.message.includes("fetch") ? "the app is not running. Double-click Ichnos.bat and reload this page." : e.message), true);
     }
   };
   el.querySelectorAll(".ins-edit").forEach(box => {
@@ -1671,7 +1671,7 @@ function renderCheck() {
         document.getElementById("cksum").innerHTML = sum();
       } catch (e) {
         ok.textContent = "✗ not saved"; ok.className = "ungrounded";
-        toast("Not saved: " + (e.message.includes("fetch") ? "the app is not running. Double-click Psych-Scientist.bat and reload this page." : e.message), true);
+        toast("Not saved: " + (e.message.includes("fetch") ? "the app is not running. Double-click Ichnos.bat and reload this page." : e.message), true);
       }
     };
     box.querySelectorAll("input[type=radio]").forEach(r => r.addEventListener("change", saveCheck));
@@ -1704,7 +1704,7 @@ function renderInterpret() {
     "A placebo lens with no theoretical content shows what an agent says anyway. Each hypothesis then passes three gates, labelled blind by the judges. " +
     "A hypothesis counts as judged once every judge has labelled it, and credit needs every judge.</p>";
   if (!I) { el.innerHTML = '<section class="block"><h2>No lenses for this corpus</h2>' + intro + '<p class="hint">Write a lens file, <code>protocol/lenses_corpus_' + esc(String(D.corpus).toLowerCase()) + ".toml</code>, then prepare <i>interpret</i> tasks (README, section Lenses).</p></section>"; return; }
-  if (I.error) { el.innerHTML = '<section class="block"><h2>The tournament could not be shown</h2><p class="warn">' + esc(I.error) + '</p><p class="hint">Lens file: <code>' + esc(I.file) + '</code>. Run <code>python -m psyscientist lenses ' + D.run + "</code> to see the full error.</p></section>"; return; }
+  if (I.error) { el.innerHTML = '<section class="block"><h2>The tournament could not be shown</h2><p class="warn">' + esc(I.error) + '</p><p class="hint">Lens file: <code>' + esc(I.file) + '</code>. Run <code>python -m ichnos lenses ' + D.run + "</code> to see the full error.</p></section>"; return; }
   if (I.empty) { el.innerHTML = '<section class="block"><h2>No interpretations yet</h2>' + intro + '<p class="hint">The lens file <code>' + esc(I.file) + "</code> exists, but tournament <b>" + esc(I.tournament) + "</b> has no imported <i>interpret</i> answers for this run.</p></section>"; return; }
 
   const lensList = arr(I.lenses), order = lensList.map(l => l.id);
@@ -1806,12 +1806,12 @@ function renderInterpret() {
       (N.plain_rewritten ? '<p class="hint">For ' + N.plain_rewritten + " hypotheses the plain search had found nothing, so a fresh agent rewrote only their plain query as 3-5 key terms (<i>novelty_plain</i>) and it ran again on OpenAlex; their boolean strings are unchanged.</p>" : "") +
       (N.without_plain ? '<p class="hint"><span class="warn">Search gap:</span> the plain-text search found nothing new for ' + N.without_plain + " of the " + N.searched +
         " searched hypotheses, so their verdicts rest on the boolean OpenAlex searches alone. Rate limits refused some; a plain query matches only titles and abstracts " +
-        "that contain all its words, which long queries rarely do; and works the boolean searches found already are not counted twice. <i>novelty_plain</i> rewrites the plain queries that found nothing (3-5 key terms); run <code>python -m psyscientist lenses " + D.run + " --search</code> after it, then <i>novelty_judge</i> for each judge (each gets only the hits it has not labelled).</p>" : "") +
+        "that contain all its words, which long queries rarely do; and works the boolean searches found already are not counted twice. <i>novelty_plain</i> rewrites the plain queries that found nothing (3-5 key terms); run <code>python -m ichnos lenses " + D.run + " --search</code> after it, then <i>novelty_judge</i> for each judge (each gets only the hits it has not labelled).</p>" : "") +
       (N.unlabelled ? '<p class="hint"><span class="warn">' + N.unlabelled + " hits with an abstract are not labelled by every judge yet</span>; their hypotheses stay unjudged until <i>novelty_judge</i> runs again.</p>" : "");
   } else {
-    html += '<p class="hint">The literature check has not run yet: prepare <i>novelty_queries</i>, run <code>python -m psyscientist lenses ' + D.run + " --search</code>, then <i>novelty_judge</i>.</p>";
+    html += '<p class="hint">The literature check has not run yet: prepare <i>novelty_queries</i>, run <code>python -m ichnos lenses ' + D.run + " --search</code>, then <i>novelty_judge</i>.</p>";
   }
-  if (vcount.not_searched) html += '<p class="hint">' + vcount.not_searched + " credited hypotheses are not searched yet: prepare <i>novelty_queries</i> (it takes only hypotheses without search strings), run <code>python -m psyscientist lenses " + D.run + " --search</code>, then <i>novelty_judge</i> for each judge.</p>";
+  if (vcount.not_searched) html += '<p class="hint">' + vcount.not_searched + " credited hypotheses are not searched yet: prepare <i>novelty_queries</i> (it takes only hypotheses without search strings), run <code>python -m ichnos lenses " + D.run + " --search</code>, then <i>novelty_judge</i> for each judge.</p>";
   if (credited.length) html += '<p class="hint">Verdicts (pick one to filter): ' + VERDICT_ORDER.filter(v => vcount[v])
     .map(v => '<button type="button" class="verdict v-' + v + (fs.verdict === v ? " on" : "") + '" aria-pressed="' + (fs.verdict === v) + '" data-verdict="' + v + '" title="' + esc(VERDICT[v]) + '">' + vname(v) + " " + vcount[v] + "</button>").join(" ") + "</p>";
   const isPending = h => h.gate1 === "unjudged" || (h.gate1 === "passed" && !h.derivation);
@@ -2025,7 +2025,7 @@ function setupLive() {
 function renderHow() {
   document.getElementById("how").innerHTML = '<section class="block how"><h2>How this page works</h2><ul>' +
     (LIVE ? "<li><b>Your call</b> is saved in the evidence store as soon as you make it, under your name at the top. Exclusions are saved once you pick a reason; notes when you leave the field.</li>"
-          : "<li><b>Your call</b> is stored in this browser only. <b>Export my decisions</b> saves a CSV; import it with <code>python -m psyscientist import-screening &lt;file&gt;</code>. Easier: start the app (double-click Psych-Scientist.bat), which saves directly.</li>") +
+          : "<li><b>Your call</b> is stored in this browser only. <b>Export my decisions</b> saves a CSV; import it with <code>python -m ichnos import-screening &lt;file&gt;</code>. Easier: start the app (double-click Ichnos.bat), which saves directly.</li>") +
     "<li><b>Needs you</b> lists records you have not decided where the agents keep the record, disagree, or exclude it although the trajectory signal is strong.</li>" +
     "<li><b>Trajectory signal</b> comes from word lists, not from an agent: " + Object.entries(D.levels).map(([k, v]) => "<i>" + k + "</i> " + esc(v)).join("; ") + ". It is a hint, never a decision.</li>" +
     "<li><b>Agent scores</b>: 2 met, 1 cannot tell, 0 not met, each backed by a quote; ⚠ marks a quote that is not in the record. The decision follows a fixed rule: the first metric scored 0 excludes, all 2 includes, anything else is unsure.</li>" +

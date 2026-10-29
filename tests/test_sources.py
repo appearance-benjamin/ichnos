@@ -1,8 +1,8 @@
 import unittest
 
-from psyscientist import query
-from psyscientist.sources import europepmc, pubmed
-from psyscientist.store import Store
+from ichnos import query
+from ichnos.sources import europepmc, pubmed
+from ichnos.store import Store
 
 PUBMED_XML = b"""<?xml version="1.0" ?>
 <PubmedArticleSet>
@@ -101,7 +101,7 @@ class EricSource(unittest.TestCase):
                          'description:(review))')
 
     def test_parse_doc(self):
-        from psyscientist.sources import eric
+        from ichnos.sources import eric
         rec = eric.parse_doc({"id": "EJ1385100", "title": "Teacher,  Gatekeeper", "author": ["Jamieson, Janica", "Hay"],
                               "description": "We  conducted interviews.", "source": "Advances in Health Sciences Education",
                               "publicationtype": ["Journal Articles", "Reports - Evaluative"],

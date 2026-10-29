@@ -5,8 +5,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from psyscientist import agents
-from psyscientist.store import Store
+from ichnos import agents
+from ichnos.store import Store
 
 PROTOCOL = '''
 [[exclusions]]

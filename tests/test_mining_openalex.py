@@ -3,8 +3,8 @@
 import unittest
 from unittest import mock
 
-from psyscientist import mining
-from psyscientist.store import Store
+from ichnos import mining
+from ichnos.store import Store
 
 ABS = {"Grandmothers": [0], "raise": [1], "fertility": [2], "in": [3], "Finland": [4]}
 
@@ -39,7 +39,7 @@ class OpenAlexMining(unittest.TestCase):
 
         with mock.patch.object(mining, "seeds", lambda s, r, p: {"references": [review, core], "citations": [core],
                                                                  "reviews": [review], "core": [core]}), \
-             mock.patch("psyscientist.http.Http.get_json", answer):
+             mock.patch("ichnos.http.Http.get_json", answer):
             out = mining.mine(store, run, {"query": "fertility AND (grandmothers OR grandparent)"}, via="openalex",
                               log=lambda *a: None)
         self.assertEqual((out["references"], out["citations"], out["matched"], out["new"]), (2, 1, 2, 2))

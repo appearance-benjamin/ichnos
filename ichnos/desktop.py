@@ -1,12 +1,12 @@
-"""Psych-Scientist as a desktop app: the local app in a window of its own, started from a shortcut with an icon.
+"""Ichnos as a desktop app: the local app in a window of its own, started from a shortcut with an icon.
 
-`psyscientist desktop` starts the app without a console and opens it in Edge (or Chrome) in app mode: a window with
+`ichnos desktop` starts the app without a console and opens it in Edge (or Chrome) in app mode: a window with
 no tabs or address bar, its own browser profile and the app's icon. Each open page reports itself to the app every
 few seconds and says goodbye when it closes; when no page has been open for a short while, the app stops. If the
 app is already running, a second start only opens another window.
 
-`psyscientist shortcuts` puts "Psych-Scientist" on the desktop and in the Start menu (Windows), pointing at
-`pythonw -m psyscientist desktop` in this folder, with the icon in psyscientist/assets.
+`ichnos shortcuts` puts "Ichnos" on the desktop and in the Start menu (Windows), pointing at
+`pythonw -m ichnos desktop` in this folder, with the icon in ichnos/assets.
 """
 
 from __future__ import annotations
@@ -26,7 +26,7 @@ from .config import ROOT, Settings
 
 PORT = 8766
 ASSETS = Path(__file__).resolve().parent / "assets"
-ICON = ASSETS / "psyscientist.ico"
+ICON = ASSETS / "ichnos.ico"
 GRACE_S = 8            # how long the app waits after the last page closed (a reload closes and reopens)
 # A page not heard from for this long is taken to be gone (a crashed window). Long, because browsers slow or freeze
 # the timers of a window in the background, and a sleeping window must not stop the app under it.
@@ -37,7 +37,7 @@ NO_PAGE_S = 120        # if no page ever opens, stop after this long
 def running(port: int = PORT) -> bool:
     try:
         with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/hello", timeout=1.5) as r:
-            return json.loads(r.read()).get("app") == "psyscientist"
+            return json.loads(r.read()).get("app") == "ichnos"
     except (OSError, ValueError):
         return False
 
@@ -89,7 +89,7 @@ def run(settings: Settings, root: Path = ROOT, reviewer: str | None = None, port
         raise SystemExit(f"No free port between {port} and {port + 24}.")
     app.port = server.server_address[1]
     threading.Thread(target=server.serve_forever, daemon=True).start()
-    print(f"{time.strftime('%Y-%m-%d %H:%M:%S')} Psych-Scientist window app on http://127.0.0.1:{app.port}/")
+    print(f"{time.strftime('%Y-%m-%d %H:%M:%S')} Ichnos window app on http://127.0.0.1:{app.port}/")
     open_window(f"http://127.0.0.1:{app.port}/", root)
     started, empty_since = time.time(), None
     try:
@@ -114,14 +114,14 @@ def run(settings: Settings, root: Path = ROOT, reviewer: str | None = None, port
     finally:
         server.shutdown()
         server.server_close()
-        print(f"{time.strftime('%Y-%m-%d %H:%M:%S')} Psych-Scientist stopped")
+        print(f"{time.strftime('%Y-%m-%d %H:%M:%S')} Ichnos stopped")
 
 
 # Shortcuts (Windows)
 
 def shortcuts(root: Path = ROOT, desktop: bool = True, start_menu: bool = True) -> list[Path]:
     if os.name != "nt":
-        raise SystemExit("Shortcuts are made on Windows only; elsewhere run: psyscientist desktop")
+        raise SystemExit("Shortcuts are made on Windows only; elsewhere run: ichnos desktop")
     exe = Path(sys.executable)
     pythonw = exe.with_name("pythonw.exe")
     target = pythonw if pythonw.exists() else (shutil.which("pythonw") and Path(shutil.which("pythonw"))) or exe
@@ -134,13 +134,13 @@ def shortcuts(root: Path = ROOT, desktop: bool = True, start_menu: bool = True) 
     for place in places:
         script = (
             "$dir = [Environment]::GetFolderPath('" + place + "'); "
-            "$lnk = Join-Path $dir 'Psych-Scientist.lnk'; "
+            "$lnk = Join-Path $dir 'Ichnos.lnk'; "
             "$s = (New-Object -ComObject WScript.Shell).CreateShortcut($lnk); "
             f"$s.TargetPath = '{target}'; "
-            "$s.Arguments = '-m psyscientist desktop'; "
+            "$s.Arguments = '-m ichnos desktop'; "
             f"$s.WorkingDirectory = '{root}'; "
             f"$s.IconLocation = '{ICON},0'; "
-            "$s.Description = 'Psych-Scientist: auditable AI-assisted scoping reviews'; "
+            "$s.Description = 'Ichnos: auditable AI-assisted scoping reviews'; "
             "$s.Save(); Write-Output $lnk")
         out = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
                              capture_output=True, text=True, check=True)
@@ -149,7 +149,7 @@ def shortcuts(root: Path = ROOT, desktop: bool = True, start_menu: bool = True) 
 
 
 def main() -> None:
-    """Entry point of the `psyscientist-app` command (a GUI script: no console window)."""
+    """Entry point of the `ichnos-app` command (a GUI script: no console window)."""
     from .config import load_settings
     settings = load_settings()
     run(settings, ROOT, settings.reviewer)

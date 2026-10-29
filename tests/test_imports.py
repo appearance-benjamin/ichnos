@@ -4,8 +4,8 @@ import tomllib
 import unittest
 from pathlib import Path
 
-from psyscientist import imports, query
-from psyscientist.config import ROOT
+from ichnos import imports, query
+from ichnos.config import ROOT
 
 EBSCO_RIS = """TY  - JOUR
 AU  - Doe, Jane

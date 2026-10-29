@@ -3,9 +3,9 @@
 import json
 import unittest
 
-from psyscientist import abstracts, mining
-from psyscientist.http import ApiError
-from psyscientist.store import Store
+from ichnos import abstracts, mining
+from ichnos.http import ApiError
+from ichnos.store import Store
 
 
 class FakeHttp:

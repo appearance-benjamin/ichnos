@@ -1,7 +1,7 @@
 """Projects: the registry, the main run of each corpus, the start page, and the search step on Home."""
 
-from psyscientist import projects
-from psyscientist.review import overview
+from ichnos import projects
+from ichnos.review import overview
 from tests.test_agents_map import Base, PROTOCOL
 import tomllib
 
@@ -77,8 +77,8 @@ class Projects(Base):
 
 class FinishedPaper(Base):
     def test_a_final_polish_after_a_minor_revision_is_the_finished_paper(self):
-        from psyscientist import paper
-        from psyscientist.store import now
+        from ichnos import paper
+        from ichnos.store import now
         paper.ensure(self.store)
         ids = []
         with self.store.db:

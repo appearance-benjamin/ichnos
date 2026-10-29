@@ -2,7 +2,7 @@
 
 import unittest
 
-from psyscientist import numgate
+from ichnos import numgate
 
 F4 = numgate.finding_text(
     "Work centrality and commitment went with pre-job-loss grief", "β = 0.16; p = 0.04", None,

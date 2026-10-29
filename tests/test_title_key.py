@@ -2,7 +2,7 @@
 
 import unittest
 
-from psyscientist.store import Store, title_key
+from ichnos.store import Store, title_key
 
 
 class TitleKeyTest(unittest.TestCase):

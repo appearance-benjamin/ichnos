@@ -4,11 +4,11 @@ import unittest
 from datetime import datetime, timezone
 from unittest import mock
 
-from psyscientist import abstracts, fulltext, resolve, texts
-from psyscientist.config import Settings
-from psyscientist.fulltext import Candidate
-from psyscientist.http import ApiError, Http
-from psyscientist.store import Store
+from ichnos import abstracts, fulltext, resolve, texts
+from ichnos.config import Settings
+from ichnos.fulltext import Candidate
+from ichnos.http import ApiError, Http
+from ichnos.store import Store
 from tests.test_abstracts import LONG, FakeHttp
 from tests.test_agents_map import Base
 
@@ -167,9 +167,9 @@ class Fallbacks(Base):
             raise ApiError(source, 404, "not found")
 
         with mock.patch.object(fulltext, "locate", lambda http, work, settings, errors=None: list(located)), \
-             mock.patch("psyscientist.http.Http.get", fake_get), \
-             mock.patch("psyscientist.http.Http.get_json", fake_json), \
-             mock.patch("psyscientist.sources.core.find", lambda http, work, key=None: core_hit), \
+             mock.patch("ichnos.http.Http.get", fake_get), \
+             mock.patch("ichnos.http.Http.get_json", fake_json), \
+             mock.patch("ichnos.sources.core.find", lambda http, work, key=None: core_hit), \
              mock.patch.object(fulltext, "first_pages", lambda pdf, n=2: first), \
              mock.patch.object(fulltext, "parse_pdf", lambda pdf, grobid: ([{"head": "Results", "text": "x" * 50}],
                                                                            "pypdf", None)):

@@ -219,7 +219,7 @@ def page(store: Store, root: Path = ROOT, token: str | None = None) -> str:
               + needs + "</section>" + explore
             + '<section class="block new"><h2>Start a new project</h2><p class="muted">Tell Claude the question in a '
               'sentence; it drafts <code>protocol/corpus_X.toml</code> for you to approve and runs the search '
-              '(<code>python -m psyscientist pilot X</code>). Names, owners and the main run of each project live in '
+              '(<code>python -m ichnos pilot X</code>). Names, owners and the main run of each project live in '
               '<code>protocol/projects.toml</code>.</p></section>')
     return PAGE.replace("__BODY__", body).replace("</body>", KEEPALIVE.replace("__TOKEN__", token or ""), 1)
 
@@ -245,7 +245,7 @@ PAGE = """<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Projects · Psych-Scientist</title>
+<title>Projects · Ichnos</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/favicon.ico">
 <style>
@@ -310,7 +310,7 @@ code { font-size: 13px; background: var(--chip); padding: 1px 5px; border-radius
 </style>
 </head>
 <body>
-<div class="top"><div class="in"><img src="/icon-32.png" width="26" height="26" alt=""><span class="brand">Psych-Scientist</span>
+<div class="top"><div class="in"><img src="/icon-32.png" width="26" height="26" alt=""><span class="brand">Ichnos</span>
 <span class="muted">Your projects</span></div></div>
 <main>
 __BODY__

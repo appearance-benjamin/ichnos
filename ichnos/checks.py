@@ -244,7 +244,7 @@ def declaration(store: Store, paper_row, protocol: dict, totals: dict) -> str:
     ins = insight_review(store, paper_row["corpus"], paper_row)
     claims = totals.get("sentences", 0) - totals.get("frame", 0)
     focused = bool(method.get("aim"))
-    parts = ["This manuscript was produced with Psych-Scientist, an AI-assisted review pipeline. Language-model "
+    parts = ["This manuscript was produced with Ichnos, an AI-assisted review pipeline. Language-model "
              "agents screened records, charted studies, extracted findings, drafted the text and reviewed it."]
     if totals and focused:      # for journal readers: what was checked and how, without the pipeline's counts
         parts.append("Every statement in the text cites the findings, method facts, tables or background sources it "

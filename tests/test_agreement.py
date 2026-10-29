@@ -1,6 +1,6 @@
 import unittest
 
-from psyscientist.agreement import Pair, cohen_kappa, complete_pairs
+from ichnos.agreement import Pair, cohen_kappa, complete_pairs
 
 
 class Kappa(unittest.TestCase):

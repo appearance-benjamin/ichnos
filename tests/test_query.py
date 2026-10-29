@@ -1,7 +1,7 @@
 import unittest
 
-from psyscientist import query
-from psyscientist.config import load_protocol
+from ichnos import query
+from ichnos.config import load_protocol
 
 CORPUS_A = load_protocol("A")[2]["query"]
 

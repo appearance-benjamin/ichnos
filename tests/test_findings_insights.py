@@ -2,9 +2,9 @@
 
 import json
 
-from psyscientist import agents, insights
-from psyscientist.report import build_report
-from psyscientist.review import build_data
+from ichnos import agents, insights
+from ichnos.report import build_report
+from ichnos.review import build_data
 from tests.test_agents_map import Base
 
 

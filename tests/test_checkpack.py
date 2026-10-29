@@ -2,7 +2,7 @@
 
 import json
 
-from psyscientist import checkpack, checks, paper
+from ichnos import checkpack, checks, paper
 from tests.test_agents_map import Base
 from tests.test_checks import HumanChecks
 
@@ -46,8 +46,8 @@ class CheckPackApp(HumanChecks):
     def test_app_download_and_import(self):
         import threading
         import urllib.request
-        from psyscientist.app import App, AppServer, handler_for
-        from psyscientist.config import Settings
+        from ichnos.app import App, AppServer, handler_for
+        from ichnos.config import Settings
         f1, pid = self.write_paper()
         app = App(Settings(None, None, None, self.root / "evidence.sqlite"), self.root, "Tester")
         server = AppServer(("127.0.0.1", 0), handler_for(app))
@@ -73,8 +73,8 @@ class CodingPart(Base):
 
     def test_a_person_codes_blind_and_is_compared_with_both_coders(self):
         import tomllib
-        from psyscientist import patterns
-        from psyscientist.store import now
+        from ichnos import patterns
+        from ichnos.store import now
         from tests.test_agents_map import PROTOCOL
         protocol = tomllib.loads(PROTOCOL)
         for w, first, second in ((1, "uk", "uk"), (2, "us", "uk")):

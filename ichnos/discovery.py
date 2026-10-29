@@ -976,7 +976,7 @@ def write_log(store: Store, path: Path) -> Path:
     ss = scores(store)
     nv, _ = novelty_state(store)
     lines = ["# Discoveries", "", f"Latest sweep: {last_sweep(store) or 'none'}. Found by code in the evidence store "
-             "(`python -m psyscientist discover`); each is noticed in the studies it lists, so a pattern claimed from "
+             "(`python -m ichnos discover`); each is noticed in the studies it lists, so a pattern claimed from "
              "it is tested on other studies.", ""]
     chosen = sorted((d for d in items if d["status"] == "chosen"),
                     key=lambda d: -(priority(ss.get(d["discovery_id"], [])) or 0))
@@ -1147,7 +1147,7 @@ def page(store: Store, root: Path = ROOT, token: str | None = None) -> str:
     cards = "".join(_card(d, runs, ss.get(d["discovery_id"]), nv.get(d["discovery_id"])) for d in items)
     body = intro + _pipeline(items, ss, nv, controls, root) + (
         chips + '<div class="grid">' + cards + "</div>" if items else '<p class="muted">Nothing found yet. Run discovery.</p>')
-    out = (projects.PAGE.replace("<title>Projects · Psych-Scientist</title>", "<title>Discovery · Psych-Scientist</title>")
+    out = (projects.PAGE.replace("<title>Projects · Ichnos</title>", "<title>Discovery · Ichnos</title>")
            .replace('<span class="muted">Your projects</span>',
                     '<a class="btn" href="/">← All projects</a><span class="muted">Discovery</span>')
            .replace("</style>", CSS + "</style>").replace("__BODY__", body))

@@ -1,7 +1,7 @@
-"""Render psyscientist/assets/icon.svg to PNGs and a Windows .ico, with the Chrome or Edge used for PDFs.
+"""Render ichnos/assets/icon.svg to PNGs and a Windows .ico, with the Chrome or Edge used for PDFs.
 
 Run once after changing the SVG:  python scripts/make_icon.py
-Writes icon-16.png ... icon-512.png and psyscientist.ico (PNG-compressed frames) next to the SVG.
+Writes icon-16.png ... icon-512.png and ichnos.ico (PNG-compressed frames) next to the SVG.
 """
 
 from __future__ import annotations
@@ -14,9 +14,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-from psyscientist.document import find_browser  # noqa: E402
+from ichnos.document import find_browser  # noqa: E402
 
-ASSETS = ROOT / "psyscientist" / "assets"
+ASSETS = ROOT / "ichnos" / "assets"
 SIZES = [16, 24, 32, 48, 64, 128, 192, 256, 512]
 
 
@@ -56,8 +56,8 @@ def main() -> None:
         if size <= 256:
             frames.append((size, png.read_bytes()))
         print(png.name, png.stat().st_size, "bytes")
-    ico(frames, ASSETS / "psyscientist.ico")
-    print("psyscientist.ico", (ASSETS / "psyscientist.ico").stat().st_size, "bytes")
+    ico(frames, ASSETS / "ichnos.ico")
+    print("ichnos.ico", (ASSETS / "ichnos.ico").stat().st_size, "bytes")
 
 
 if __name__ == "__main__":

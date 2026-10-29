@@ -2,8 +2,8 @@
 
 import unittest
 
-from psyscientist import aim, paper, tables
-from psyscientist.store import Store
+from ichnos import aim, paper, tables
+from ichnos.store import Store
 
 FIELDS = [{"name": "candidate_rule", "categories": ["readiness_embodied_capital", "status_competition", "none"]},
           {"name": "outcome", "categories": ["completed_fertility_children", "other"]},
@@ -92,7 +92,7 @@ class FocusPaper(unittest.TestCase):
     def test_records_left_on_the_sheet_unscreened_are_not_counted_as_screened(self):
         left = self.store.upsert_work({"title": "A mined record nobody screened", "year": 2021})
         self.store.add_sample(self.run, [left], "pilot_screening")
-        from psyscientist.agents import screened_ids
+        from ichnos.agents import screened_ids
         self.assertNotIn(left, screened_ids(self.store, self.run))
         figure = paper.flow(self.store, self.run)
         self.assertIn("3 records screened", figure)
@@ -102,7 +102,7 @@ class FocusPaper(unittest.TestCase):
         self.assertIn("pre-specified tests that count studies by direction", facts)
 
     def test_sensitivity_analyses_repeat_the_test_and_count_named_samples_once(self):
-        from psyscientist import rulemap
+        from ichnos import rulemap
         lo, hi = rulemap.odds_ci(10, 4, 2, 17)
         self.assertAlmostEqual(lo, 3.27, places=1)
         self.assertAlmostEqual(hi, 137.7, places=0)
@@ -139,7 +139,7 @@ class FocusPaper(unittest.TestCase):
 
     def test_a_person_can_check_a_random_sample_of_the_counted_findings_with_their_codes(self):
         import json
-        from psyscientist import checkpack, checks
+        from ichnos import checkpack, checks
         paper.ensure(self.store)
         with self.store.db:
             pid = self.store.db.execute(
@@ -159,7 +159,7 @@ class FocusPaper(unittest.TestCase):
         self.assertEqual(checks.headline_names(PROTOCOL, row), ["Abstract", "Main findings", "Conclusion"])
 
     def test_the_pack_shows_the_strata_codes_but_not_another_rules_not_applicable(self):
-        from psyscientist import checkpack
+        from ichnos import checkpack
         codes = checkpack._codes({"candidate_rule": "kin_support", "direction": "raises", "focal_sex": "women",
                                   "kin_type": "grandparental_help", "status_measure": "not_applicable"})
         self.assertIn("focal sex: women", codes)

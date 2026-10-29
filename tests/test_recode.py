@@ -2,7 +2,7 @@
 
 import json
 
-from psyscientist import agents
+from ichnos import agents
 from tests.test_agents_map import Base
 from tests.test_findings_insights import FindingsAndInsights
 
@@ -58,8 +58,8 @@ class Recode(FindingsAndInsights):
 class SecondCoderOnFindings(Base):
     def test_a_blind_second_coding_of_findings_is_kept_apart(self):
         import json as _json
-        from psyscientist import agents, recode
-        from psyscientist.store import now as _now
+        from ichnos import agents, recode
+        from ichnos.store import now as _now
         ids = []
         for w, d in ((1, "better"), (2, "worse")):
             cur = self.store.db.execute("INSERT INTO findings (work_id, run_id, extractor, finding, fields, evidence, "

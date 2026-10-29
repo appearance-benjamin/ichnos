@@ -8,8 +8,8 @@ import tomllib
 import unittest
 from pathlib import Path
 
-from psyscientist import agents, recall
-from psyscientist.store import Store
+from ichnos import agents, recall
+from ichnos.store import Store
 
 PROTOCOL = '''
 corpus = "R"

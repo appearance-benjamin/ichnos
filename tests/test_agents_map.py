@@ -10,10 +10,10 @@ import tomllib
 import unittest
 from pathlib import Path
 
-from psyscientist import agents, mapping, signals
-from psyscientist.report import build_report, write_report
-from psyscientist.review import build_data
-from psyscientist.store import Store
+from ichnos import agents, mapping, signals
+from ichnos.report import build_report, write_report
+from ichnos.review import build_data
+from ichnos.store import Store
 
 PROTOCOL = '''
 corpus = "Z"

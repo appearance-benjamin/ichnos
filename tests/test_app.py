@@ -7,9 +7,9 @@ import urllib.error
 import urllib.request
 from http.server import ThreadingHTTPServer
 
-from psyscientist import insights
-from psyscientist.app import App, AppServer, handler_for
-from psyscientist.config import Settings
+from ichnos import insights
+from ichnos.app import App, AppServer, handler_for
+from ichnos.config import Settings
 from tests.test_agents_map import Base
 
 

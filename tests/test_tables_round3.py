@@ -3,8 +3,8 @@ evidence strength, and names charted in lowercase."""
 
 import unittest
 
-from psyscientist import tables
-from psyscientist.store import Store
+from ichnos import tables
+from ichnos.store import Store
 
 PROTOCOL = {
     "map": {"dimensions": [

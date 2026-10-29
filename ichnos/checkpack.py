@@ -14,7 +14,7 @@ An editor's condition for such a review is that a person checks it. A pack holds
 
 The page needs no installation and no server: it opens from disk in any browser, keeps progress in that browser,
 and "Download my checks" saves a JSON file. The review's owner imports it with
-`python -m psyscientist import-checks <file>`; finding checks go to the same store as the app's Check findings tab,
+`python -m ichnos import-checks <file>`; finding checks go to the same store as the app's Check findings tab,
 so the Declaration of AI use and the next revision follow them.
 """
 
@@ -32,7 +32,7 @@ from . import agreement, checks, tables
 from .config import ROOT
 from .store import Store, now
 
-FORMAT = "psyscientist-checks/1"
+FORMAT = "psyscientist-checks/1"            # file format id, kept so packs already sent out still import
 VERDICTS = {"meets": "meets every inclusion criterion", "fails": "fails at least one criterion",
             "cannot_tell": "cannot tell from what I can access"}
 DECISIONS = {"include": "include", "exclude": "exclude", "unsure": "unsure"}
@@ -330,7 +330,7 @@ def import_bytes(store: Store, raw: bytes, checker: str | None = None, dry_run: 
     except ValueError as err:
         raise ValueError(f"not a checks file ({err})") from err
     if answer.get("format") != FORMAT:
-        raise ValueError("not a Psych-Scientist checks file (made with 'Download my checks' in a check pack)")
+        raise ValueError("not a Ichnos checks file (made with 'Download my checks' in a check pack)")
     row = store.db.execute("SELECT * FROM check_packs WHERE pack_id = ?", (answer.get("pack_id"),)).fetchone()
     if row is None:
         raise ValueError(f"pack {answer.get('pack_id')} is not in this evidence store; import it into the store the "
@@ -768,7 +768,7 @@ function render() {
         el("input", {type: "file", accept: ".json,application/json", style: "display:none", on: {change: e => loadFile(e, msg)}})),
       msg,
       el("div", {class: "lab", text: "Then"}),
-      el("p", {class: "note", text: "Send the downloaded file to the review's owner, who imports it with: python -m psyscientist import-checks <file>. " +
+      el("p", {class: "note", text: "Send the downloaded file to the review's owner, who imports it with: python -m ichnos import-checks <file>. " +
         "Your checks then appear in the manuscript's Declaration of AI use and its appendix, with your name and the date."})));
   }
 }

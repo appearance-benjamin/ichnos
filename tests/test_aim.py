@@ -3,8 +3,8 @@
 import json
 import tomllib
 
-from psyscientist import aim, paper, tables
-from psyscientist.store import now
+from ichnos import aim, paper, tables
+from ichnos.store import now
 from tests.test_agents_map import Base, PROTOCOL
 
 AIM = '''
@@ -67,7 +67,7 @@ class AimPaper(Base):
 
 class Directions(AimPaper):
     def test_proposed_directions_are_checked_stored_and_chosen(self):
-        from psyscientist import directions
+        from ichnos import directions
         data = {"finding_ids": [1, 2], "tables": {"T1": "x"}, "insights": [{"id": 5}], "paper_id": 1}
         good = {"title": "t", "kind": "new_review", "question": "q", "why": "w", "evidence": "e", "unknown": "u",
                 "next_step": "n", "value": 4, "feasibility": 3, "novelty": 2, "cites": [1], "tables": ["T1"]}
@@ -81,7 +81,7 @@ class Directions(AimPaper):
         self.assertEqual(directions.check({"directions": [dict(good, id=f"D{i}") for i in range(6)]}, data), [])
 
     def test_several_papers_are_read_together(self):
-        from psyscientist import directions
+        from ichnos import directions
         paper.ensure(self.store)
         ids = []
         for title in ("General", "Proposal"):
@@ -105,7 +105,7 @@ class Directions(AimPaper):
 
 class FocusedRender(AimPaper):
     def test_the_submission_leaves_the_supplement_apart(self):
-        from psyscientist import paper as paper_mod
+        from ichnos import paper as paper_mod
         paper_mod.ensure(self.store)
         method = {"aim": True, "section": "Full generated method.", "facts": [], "retained": [], "core": [],
                   "tables": [{"id": "T1", "place": "main", "text": "**Table 1.** Main table."},
@@ -164,7 +164,7 @@ class GeneralPaper(Base):
 
 class Proposal(Base):
     def test_a_proposal_names_its_aim_needs_its_sections_and_checks_its_model_table(self):
-        from psyscientist import aim as aim_mod
+        from ichnos import aim as aim_mod
         protocol = tomllib.loads(PROTOCOL + AIM.replace('kind = "solutions"', 'id = "main"\nkind = "solutions"')
                                  + '\n[[aims]]\nid = "redesign"\nkind = "proposal"\nquestion = "How to redesign?"\n'
                                    'by = "design_choice"\nlink = "aim_link"\ndomain = "outcome_domain"\n')

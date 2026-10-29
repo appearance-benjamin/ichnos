@@ -3,9 +3,9 @@
 import json
 import unittest
 
-from psyscientist import mining
-from psyscientist.agents import sheet_ids
-from psyscientist.store import Store
+from ichnos import mining
+from ichnos.agents import sheet_ids
+from ichnos.store import Store
 
 
 def paper(pid, title, abstract=""):

@@ -1,4 +1,4 @@
-# Psych-Scientist
+# Ichnos
 
 An auditable evidence pipeline for the conceptual review *When Automation Takes
 the Work*. This is phase 1 of the blueprint: retrieval from OpenAlex, Semantic
@@ -11,18 +11,18 @@ To start a review of your own, copy [examples/corpus_a.toml](examples/corpus_a.t
 
 ## The app (no terminal needed)
 
-Psych-Scientist is a desktop app. Once, from this folder:
+Ichnos is a desktop app. Once, from this folder:
 
 ```bash
-python -m psyscientist shortcuts
+python -m ichnos shortcuts
 ```
 
-puts **Psych-Scientist**, with its icon, on the desktop and in the Start menu.
+puts **Ichnos**, with its icon, on the desktop and in the Start menu.
 Opening it starts the app without a console and shows it in a window of its own
 (Edge or Chrome in app mode: no tabs, no address bar). The app stops by itself a
 few seconds after you close the window; opening it while it runs just opens
-another window. Double-clicking **`Psych-Scientist.bat`** does the same, and
-`python -m psyscientist desktop` starts it from a terminal. It runs only on
+another window. Double-clicking **`Ichnos.bat`** does the same, and
+`python -m ichnos desktop` starts it from a terminal. It runs only on
 your computer; what it writes goes to `output/app.log`.
 
 **Projects.** The app opens on your projects, one card per corpus. Each card
@@ -74,7 +74,7 @@ narrow window the sidebar slides in from the menu button.
   - **Missing abstracts.** Many publishers (Springer, Elsevier, APA and others)
     show an abstract on their own page but do not pass it to the open databases.
     Their pages also refuse automated reading, so the pipeline cannot copy it
-    (`python -m psyscientist abstracts <run>` tries PubMed, Europe PMC, Crossref,
+    (`python -m ichnos abstracts <run>` tries PubMed, Europe PMC, Crossref,
     Semantic Scholar and OpenAlex first). A library database export brings these
     abstracts all at once:
     1. Pick the database. The box shows the protocol's search string for it.
@@ -85,7 +85,7 @@ narrow window the sidebar slides in from the menu button.
     The app registers the export in the protocol, as `add-export` does, and
     loads it into the shown run. New records go on the sheet, and records
     already there get the export's abstract.
-  - `python -m psyscientist add-sources <run>` does the same from the terminal
+  - `python -m ichnos add-sources <run>` does the same from the terminal
     for exports registered with `add-export`.
 - **Records**: decide each record with the buttons (exclusions are saved once
   you pick a reason). Everything is saved straight away; there is nothing to
@@ -131,15 +131,15 @@ below.
 
 Python 3.11 or newer. No packages to install: everything uses the standard library.
 
-The commands below run from this folder (`python -m psyscientist ...`). To use
-the `psyscientist` command from any folder, install it once, from this folder:
+The commands below run from this folder (`python -m ichnos ...`). To use
+the `ichnos` command from any folder, install it once, from this folder:
 
 ```bash
 python -m pip install -e .
 ```
 
 The `-e` keeps the install pointing at this folder, so protocols, the evidence
-store and the output stay here. `pip uninstall psyscientist` removes it again.
+store and the output stay here. `pip uninstall ichnos` removes it again.
 Add `.[pdf]` instead of `.` to also install pypdf, for reading PDFs when
 GROBID is not running.
 
@@ -152,7 +152,7 @@ limits.
 Run from this folder.
 
 ```bash
-python -m psyscientist pilot A
+python -m ichnos pilot A
 ```
 
 Searches every source in `protocol/corpus_a.toml`, merges duplicates, and writes
@@ -163,7 +163,7 @@ corpus is left off and keeps the decisions made there, so a new run's sheet
 holds only what it added. Use `--full-sheet` to put the whole pool on the sheet.
 
 ```bash
-python -m psyscientist import-screening output/corpus_A/run_001/screening_sheet.csv
+python -m ichnos import-screening output/corpus_A/run_001/screening_sheet.csv
 ```
 
 Reads your decisions back (plain CSV or CSV UTF-8, `;` or `,`), checks them
@@ -175,13 +175,13 @@ have both decided every record on the sheet, the report adds their agreement
 reveals nothing about the other screener.
 
 ```bash
-python -m psyscientist report 1
+python -m ichnos report 1
 ```
 
 Rebuilds a run's report from the evidence store.
 
 ```bash
-python -m psyscientist mine 1
+python -m ichnos mine 1
 ```
 
 Citation searching: fetches from Semantic Scholar the reference lists of the
@@ -199,7 +199,7 @@ title, and every pass is kept, so the Method reconciles each pass's counts and
 says what became of the records it added.
 
 ```bash
-python -m psyscientist recall 5
+python -m ichnos recall 5
 ```
 
 Recall test: fetches from OpenAlex the reference lists of the background
@@ -211,7 +211,7 @@ counts relevant records found and missed, and the paper's Method and
 supplement report them.
 
 ```bash
-python -m psyscientist abstracts 5
+python -m ichnos abstracts 5
 ```
 
 Looks up the abstract of every retained record that has none, by DOI or PubMed
@@ -223,7 +223,7 @@ prints the records that gained an abstract, to judge again with
 `agent-tasks eligibility <run> --works <ids>`.
 
 ```bash
-python -m psyscientist add-sources 5
+python -m ichnos add-sources 5
 ```
 
 Searches the protocol's sources that a run has not searched yet, for example
@@ -258,7 +258,7 @@ keys `i` `u` `e` (`j` `k` to move). Your decisions stay in this browser until
 you click **Export my decisions**, then:
 
 ```bash
-python -m psyscientist import-screening "$env:USERPROFILE\Downloads\screening_decisions_corpus_A_run_002.csv"
+python -m ichnos import-screening "$env:USERPROFILE\Downloads\screening_decisions_corpus_A_run_002.csv"
 ```
 
 **Blind mode** hides every agent judgement, for screening that must stay
@@ -271,8 +271,8 @@ code writes the task, an agent does it, and the code checks and stores the
 answer:
 
 ```bash
-python -m psyscientist agent-tasks screen 2 --agent model:claude-sonnet-5-5
-python -m psyscientist agent-import output/corpus_A/run_002/agents/screen__model-claude-sonnet-5-5
+python -m ichnos agent-tasks screen 2 --agent model:claude-sonnet-5-5
+python -m ichnos agent-import output/corpus_A/run_002/agents/screen__model-claude-sonnet-5-5
 ```
 
 - **screen** scores every record of the run's sheet on `[[screening.metrics]]`
@@ -301,9 +301,9 @@ other.
 ### Local models: agent-run
 
 ```bash
-python -m psyscientist agent-tasks screen 8 --agent model:qwen3-14b --batch-size 10
-python -m psyscientist agent-run output/corpus_F/run_008/agents/screen__model-qwen3-14b --model qwen3:14b
-python -m psyscientist agent-import output/corpus_F/run_008/agents/screen__model-qwen3-14b
+python -m ichnos agent-tasks screen 8 --agent model:qwen3-14b --batch-size 10
+python -m ichnos agent-run output/corpus_F/run_008/agents/screen__model-qwen3-14b --model qwen3:14b
+python -m ichnos agent-import output/corpus_F/run_008/agents/screen__model-qwen3-14b
 ```
 
 `agent-run` sends each batch, with `instructions.md` as the system prompt, to
@@ -347,12 +347,12 @@ The report and review page then show the tree, the **matches** (comparable
 studies in different settings), the **gaps** (settings with no study in a
 comparable group, plus matrices of empty cells), claim links, and the label
 vocabulary. Merge synonyms under `[map.aliases.<dimension>]` and run
-`python -m psyscientist report N` again.
+`python -m ichnos report N` again.
 
 ## Findings
 
 ```bash
-python -m psyscientist agent-tasks findings 2 --agent model:claude-opus-5-5
+python -m ichnos agent-tasks findings 2 --agent model:claude-opus-5-5
 ```
 
 One row per result of each kept study that bears on the protocol's
@@ -366,7 +366,7 @@ a matrix of two fields (`matrix`), and the review page has a *Findings* tab.
 ## The writer
 
 ```bash
-python -m psyscientist agent-tasks write 2 --agent model:claude-opus-5-5
+python -m ichnos agent-tasks write 2 --agent model:claude-opus-5-5
 ```
 
 The evidence-first writer gets the run's findings (each with its verbatim
@@ -440,9 +440,9 @@ The blueprint's stages 6 to 8 for a whole manuscript, each an agent task
    findings; the code checks their numbers against the cited table, and the
    auditor sees the table and each cited study's charted details. The
    references list every retained record in APA style; run
-   `python -m psyscientist biblio 2` first to add volume, issue and pages from
+   `python -m ichnos biblio 2` first to add volume, issue and pages from
    Crossref (logged like every other call; no email is sent). Each version is
-   also written as an HTML document, and `python -m psyscientist pdf <paper id>`
+   also written as an HTML document, and `python -m ichnos pdf <paper id>`
    prints the submission as a journal-style A4 PDF through Chrome or Edge
    (`--full` adds the response to reviewers and the appendices). Authors go in
    `[paper] authors` as `{name = "...", affiliation = "..."}`.
@@ -476,7 +476,7 @@ An editor will not accept an AI-assisted review that no person has checked. A
 check pack lets anyone do that without installing anything:
 
 ```bash
-python -m psyscientist check-pack 4
+python -m ichnos check-pack 4
 ```
 
 writes one HTML file to `output/corpus_X/run_NNN/check_packs/` (or use
@@ -507,7 +507,7 @@ progress in that browser. It has three parts:
 **Download my checks** saves a JSON file; the checker sends it back, and you run
 
 ```bash
-python -m psyscientist import-checks checks_B_940f1cc4bc6a_Sam.json
+python -m ichnos import-checks checks_B_940f1cc4bc6a_Sam.json
 ```
 
 (or **Import a returned checks file** in the app; `--dry-run` shows what would be
@@ -531,21 +531,21 @@ captured with their evidence and their history:
 - Your own:
 
   ```bash
-  python -m psyscientist insight add A "One sentence: what you noticed" --kind hypothesis --works 20,46
+  python -m ichnos insight add A "One sentence: what you noticed" --kind hypothesis --works 20,46
   ```
 
 Each insight starts as *noted* and moves on with
-`python -m psyscientist insight status 7 supported --note "two more studies"`:
+`python -m ichnos insight status 7 supported --note "two more studies"`:
 supported, contradicted, tested, promoted (into the paper) or dropped. Every
 change is kept with its date and author. `notes/insights_corpus_A.md` is the
-log, rebuilt with every report (or `python -m psyscientist insights A`); the
+log, rebuilt with every report (or `python -m ichnos insights A`); the
 review page has an *Insights* tab.
 
 ## Numbers are verified; interpretation is scored
 
 Two currencies:
 
-- **Numbers** go through the number gate (`psyscientist/numgate.py`). A
+- **Numbers** go through the number gate (`ichnos/numgate.py`). A
   number in a sentence, insight or hypothesis must stand in what it cites, and
   as the same statistic:
   - β in the text cannot be an F value in the source;
@@ -608,7 +608,7 @@ from the review protocol, so editing a lens does not change the review's hash.
        and a broad boolean search string and a plain query for each credited
        hypothesis. Three statements from the review's own core studies are
        mixed in as recall controls.
-     - `python -m psyscientist lenses 2 --search` runs the searches and logs
+     - `python -m ichnos lenses 2 --search` runs the searches and logs
        every call. Strict and broad strings go to OpenAlex, ranked by
        relevance; the plain query goes to Semantic Scholar, with OpenAlex as a
        fallback.
@@ -657,7 +657,7 @@ from the review protocol, so editing a lens does not change the review's hash.
 
   A card has no winner field, and code refuses one, and refuses a card whose
   possible results do not split the lenses.
-- `python -m psyscientist lenses 2` counts everything in code and writes
+- `python -m ichnos lenses 2` counts everything in code and writes
   `notes/interpretation_corpus_A.md` (plus `.html` and `.json`):
   - agreement between a lens's runs;
   - whether lenses differ more than runs of the same lens (an exact
@@ -710,12 +710,12 @@ degenerating, no gain or worse. Its parents, operator and change are logged,
 and seeds are never deleted. The file is pre-registered: if it changes after a
 game has begun, the game stops.
 
-- `python -m psyscientist evolve 2` writes every task the state allows, for
+- `python -m ichnos evolve 2` writes every task the state allows, for
   example the probe task, generation 0, the mutations, the judge or the test
   forecasts. It also lists the open ones.
-- `python -m psyscientist evolve 2 --import-all` first imports every answered
+- `python -m ichnos evolve 2 --import-all` first imports every answered
   task.
-- `python -m psyscientist evolve 2 --report` counts and writes
+- `python -m ichnos evolve 2 --report` counts and writes
   `notes/lens_evolution_corpus_A.md` (plus `.html` and `.json`) and a blind
   rating sheet (seed against evolved programme). The sheet goes to the run's
   output folder; its key is stored in the evidence store.
@@ -724,14 +724,14 @@ game has begun, the game stops.
 `protocol/evolution_corpus_ab.toml`, pre-registers one game per corpus under
 one hash, and pools their arms at the end. The game id picks the part, as in
 `--game evo-b1`. A new game begins only with `--start`.
-- `python -m psyscientist evolve --game evo-ab1 --plan` prints the split, the
+- `python -m ichnos evolve --game evo-ab1 --plan` prints the split, the
   probes to expect, the power, the noise floor and the agent tasks per
   generation. It writes nothing. Once generation 0 is in, it resizes the game
   with the game's own noise.
-- `python -m psyscientist evolve 4 --game evo-b1 --dates` fetches Crossref
+- `python -m ichnos evolve 4 --game evo-b1 --dates` fetches Crossref
   publication dates, for a test split after the forecaster's training cutoff.
-- `python -m psyscientist evolve 4 --game evo-b1 --start` begins the game.
-- `python -m psyscientist evolve --game evo-ab1 --report` writes each game's
+- `python -m ichnos evolve 4 --game evo-b1 --start` begins the game.
+- `python -m ichnos evolve --game evo-ab1 --report` writes each game's
   report and the pooled one.
 
 ### The referee: do the lenses' propositions come true?
@@ -769,13 +769,13 @@ after a round has begun, the round stops.
 The round is a standing registry: when a search update adds studies, the same
 frozen propositions are judged against the new test studies only.
 
-- `python -m psyscientist referee 6 --dates` fetches the Crossref dates.
-- `python -m psyscientist referee 6 --plan` prints the split, the test set, the
+- `python -m ichnos referee 6 --dates` fetches the Crossref dates.
+- `python -m ichnos referee 6 --plan` prints the split, the test set, the
   power and the agent tasks. It writes nothing.
-- `python -m psyscientist referee 6 --start` begins the round; afterwards
+- `python -m ichnos referee 6 --start` begins the round; afterwards
   `referee 6` writes every task the state allows and lists the open ones.
   `--import-all` first imports every answered task.
-- `python -m psyscientist referee 6 --report` writes
+- `python -m ichnos referee 6 --report` writes
   `notes/referee_corpus_D.md` (and `.json`).
 
 #### The forward check of the papers (a claims round)
@@ -855,9 +855,9 @@ directions. Code finds them, not an agent, and each card shows the counts,
 studies and verbatim passages it rests on.
 
 ```bash
-python -m psyscientist discover                 # sweep, print the top 5 of each kind
-python -m psyscientist discover --kind gap --corpus E --top 20 --no-sweep
-python -m psyscientist discovery 12 chosen --note "moderator paper"
+python -m ichnos discover                 # sweep, print the top 5 of each kind
+python -m ichnos discover --kind gap --corpus E --top 20 --no-sweep
+python -m ichnos discovery 12 chosen --note "moderator paper"
 ```
 
 Five kinds:
@@ -901,11 +901,11 @@ Discovery page or with `discover --task`, an agent answers them in a Claude
 session, and you import them on the page or with `agent-import`.
 
 ```bash
-python -m psyscientist discover --task discovery_score --agent model:claude-opus-5-5
-python -m psyscientist discover --task novelty_queries --agent model:claude-opus-5-5
-python -m psyscientist discover --search
-python -m psyscientist discover --task novelty_judge --agent model:claude-opus-5-5
-python -m psyscientist discover --task novelty_judge --agent model:claude-sonnet-5-5
+python -m ichnos discover --task discovery_score --agent model:claude-opus-5-5
+python -m ichnos discover --task novelty_queries --agent model:claude-opus-5-5
+python -m ichnos discover --search
+python -m ichnos discover --task novelty_judge --agent model:claude-opus-5-5
+python -m ichnos discover --task novelty_judge --agent model:claude-sonnet-5-5
 ```
 
 1. **Scoring.** The agent reads each discovery's dossier: its counts, its
@@ -958,15 +958,15 @@ A comparator strand is a corpus of its own, registered with
 `strand_of = "C"` in `protocol/projects.toml`. It shows on C's card before
 its first run. Its predictions sit in the main corpus's protocol under
 `[comparator]`, and are counted on the strand's coding.
-- `python -m psyscientist agent-tasks extract 5 --dims a,b --agent model:... --second-coder`
+- `python -m ichnos agent-tasks extract 5 --dims a,b --agent model:... --second-coder`
   writes an independent second coding of those dimensions. On import it
   goes to `second_codings`, never to the charting. `patterns` then reports
   Cohen's kappa per category, and marks patterns that rest on a category
   below `kappa_min` (default 0.6) as unreliable.
-- `python -m psyscientist patterns 5 --check` checks that every pattern and
+- `python -m ichnos patterns 5 --check` checks that every pattern and
   prediction can be counted as written: the dimensions, categories, ranges,
   lens predictions and insights exist.
-- `python -m psyscientist patterns 5 --comparator <run of D>` counts them.
+- `python -m ichnos patterns 5 --comparator <run of D>` counts them.
 
 ## Full texts
 
@@ -975,7 +975,7 @@ its first run. Its predictions sit in the main corpus's protocol under
 Most studies are not open access. Download them yourself through your
 university library:
 
-1. `python -m psyscientist library 2` writes
+1. `python -m ichnos library 2` writes
    `output/corpus_A/run_002/fulltext_todo.html`: every retained record without a
    full text, with DOI and Google Scholar links. The records you kept yourself
    (your include or unsure in the app) come first, then core studies, then
@@ -990,7 +990,7 @@ university library:
    or title on its first pages. In Downloads a file is matched by its DOI or
    title only, and only to a retained record still without a full text.
 3. Press **Add downloaded PDFs** in the app, or run
-   `python -m psyscientist add-pdfs` (every run at once; `add-pdfs 2` for one).
+   `python -m ichnos add-pdfs` (every run at once; `add-pdfs 2` for one).
    - Each matching PDF is parsed (by GROBID when it runs) and stored.
    - Inbox files move to `fulltext/inbox/done/`; unmatched ones stay.
    - Downloads stays as it is: matching files are copied, and nothing there is
@@ -1013,7 +1013,7 @@ Abstracts rarely name instruments or analyses, so the extraction agent can read
 the methods and results of an open-access copy:
 
 ```bash
-python -m psyscientist fulltext 2
+python -m ichnos fulltext 2
 ```
 
 For each kept study of the run (`--all` for the whole sheet) it looks for an
@@ -1033,7 +1033,7 @@ then compares it with the abstract-only extraction.
 **GROBID** runs in Docker:
 
 ```bash
-docker run -d --name psyscientist-grobid --restart unless-stopped -p 127.0.0.1:8070:8070 grobid/grobid:0.9.1-crf
+docker run -d --name ichnos-grobid --restart unless-stopped -p 127.0.0.1:8070:8070 grobid/grobid:0.9.1-crf
 ```
 
 If Docker Desktop stops at start-up with "initializing Inference manager ...
@@ -1049,7 +1049,7 @@ merges it with the API sources like any other source.
 1. Get the search string in each database's syntax:
 
    ```bash
-   python -m psyscientist strings A
+   python -m ichnos strings A
    ```
 
    It prints the strings and saves them to `output/corpus_A/search_strings.md`:
@@ -1071,7 +1071,7 @@ merges it with the API sources like any other source.
 4. Register the export:
 
    ```bash
-   python -m psyscientist add-export A psycinfo.ris --source psycinfo --platform ebsco --hits 312
+   python -m ichnos add-export A psycinfo.ris --source psycinfo --platform ebsco --hits 312
    ```
 
    `--platform` (ebsco, ovid, scopus or wos) says you pasted the string from
@@ -1082,7 +1082,7 @@ merges it with the API sources like any other source.
    protocol. Each source name can be used once, so call a second PsycINFO
    search `psycinfo_2`.
 
-5. Run `python -m psyscientist pilot A`. The new records appear on the run's
+5. Run `python -m ichnos pilot A`. The new records appear on the run's
    sheet. Records already found by another source merge with it, by DOI or
    by title and year. Each export file is stored in full in the evidence store
    at every run.
@@ -1096,23 +1096,23 @@ hash. Bump `version` when you freeze the protocol for the preregistration.
 | --- | --- |
 | `examples/corpus_a.toml` | An example protocol to copy into `protocol/`. |
 | `protocol/corpus_a.toml` | Search string, sources, pilot size and seed, screening rule and codes. Yours to edit; every run stores its full text and hash. |
-| `psyscientist/query.py` | Parses the canonical boolean string, renders it per source and database, re-checks it locally. |
-| `psyscientist/sources/` | OpenAlex, Semantic Scholar, PubMed (E-utilities), Europe PMC and ERIC clients. |
-| `psyscientist/imports.py` | Reads library exports (RIS, CSV / tab-delimited, Web of Science plain text); `add-export` and `strings`. |
+| `ichnos/query.py` | Parses the canonical boolean string, renders it per source and database, re-checks it locally. |
+| `ichnos/sources/` | OpenAlex, Semantic Scholar, PubMed (E-utilities), Europe PMC and ERIC clients. |
+| `ichnos/imports.py` | Reads library exports (RIS, CSV / tab-delimited, Web of Science plain text); `add-export` and `strings`. |
 | `imports/` | Export files registered with `add-export`, one folder per corpus. |
-| `psyscientist/store.py` | Evidence store schema and writes. |
-| `psyscientist/pilot.py`, `report.py` | Pilot run, screening sheet and import, report. |
-| `psyscientist/signals.py` | Trajectory, heterogeneity and design word lists, and the trajectory signal. |
-| `psyscientist/agents.py` | Agent tasks from the protocol (screen, extract), decision rule, quote check, import. |
-| `psyscientist/mapping.py` | Evidence map: tree, matches, gaps, matrices, claim links. |
-| `psyscientist/review.py` | The review page. |
-| `psyscientist/insights.py` | Insight capture, status lifecycle, and the insight log. |
-| `psyscientist/discovery.py` | Candidate directions across all projects, found by code: contradictions, gaps, bridges, recurring insights, rising topics; scoring and novelty tasks for the chosen ones; the Discovery page. |
+| `ichnos/store.py` | Evidence store schema and writes. |
+| `ichnos/pilot.py`, `report.py` | Pilot run, screening sheet and import, report. |
+| `ichnos/signals.py` | Trajectory, heterogeneity and design word lists, and the trajectory signal. |
+| `ichnos/agents.py` | Agent tasks from the protocol (screen, extract), decision rule, quote check, import. |
+| `ichnos/mapping.py` | Evidence map: tree, matches, gaps, matrices, claim links. |
+| `ichnos/review.py` | The review page. |
+| `ichnos/insights.py` | Insight capture, status lifecycle, and the insight log. |
+| `ichnos/discovery.py` | Candidate directions across all projects, found by code: contradictions, gaps, bridges, recurring insights, rising topics; scoring and novelty tasks for the chosen ones; the Discovery page. |
 | `output/discovery/agents/` | The discovery tasks (scoring, search strings, judging), one folder per task. |
-| `psyscientist/writer.py` | The evidence-first writer: input, sentence checks, Markdown with references. |
-| `psyscientist/paper.py` | Full manuscripts: generated Method, flow and table; audit, peer review, editor, revision. |
-| `psyscientist/app.py` | The local app (`Psych-Scientist.bat`). |
-| `psyscientist/fulltext.py` | Open-access full texts: Europe PMC XML, Unpaywall and OpenAlex PDFs, GROBID or pypdf parsing. |
+| `ichnos/writer.py` | The evidence-first writer: input, sentence checks, Markdown with references. |
+| `ichnos/paper.py` | Full manuscripts: generated Method, flow and table; audit, peer review, editor, revision. |
+| `ichnos/app.py` | The local app (`Ichnos.bat`). |
+| `ichnos/fulltext.py` | Open-access full texts: Europe PMC XML, Unpaywall and OpenAlex PDFs, GROBID or pypdf parsing. |
 | `fulltext/` | The downloaded copies (not committed). |
 | `data/evidence.sqlite` | The evidence store. |
 | `output/` | Generated sheets and reports, one folder per run. |

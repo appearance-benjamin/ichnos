@@ -108,7 +108,7 @@ def lookup(http: Http, work, source: str, contact_email: str | None = None,
         hit = core.find(http, work, core_key)
         return (hit or {}).get("abstract")
     if source == "pubmed":
-        common = {"db": "pubmed", "tool": "psyscientist", **({"email": contact_email} if contact_email else {})}
+        common = {"db": "pubmed", "tool": "ichnos", **({"email": contact_email} if contact_email else {})}
         known = bool(pmid)
         if not pmid and doi:
             found = http.get_json("pubmed", EUTILS + "esearch.fcgi", {**common, "term": f"{doi}[doi]",

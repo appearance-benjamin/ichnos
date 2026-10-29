@@ -6,7 +6,7 @@ import tomllib
 import unittest
 from collections import Counter
 
-from psyscientist import agents, evolution, referee
+from ichnos import agents, evolution, referee
 from tests.test_agents_map import Base
 
 REFEREE_FILE = '''
@@ -381,7 +381,7 @@ class ClaimsRound(Round):
 
     def setUp(self):
         super().setUp()
-        from psyscientist import paper
+        from ichnos import paper
         paper.ensure(self.store)
         self.papers = []
         for title in ("General", "Proposal"):
@@ -460,7 +460,7 @@ class ClaimsRound(Round):
         self.assertEqual([c["key"][-2:] for c in s["papers"][0]["claims"]], ["R1", "R2", "R3", "R4", "R5", "R6"])
 
         import tomllib
-        from psyscientist.review import overview
+        from ichnos.review import overview
         from tests.test_agents_map import PROTOCOL
         o = overview(self.store, self.run, tomllib.loads(PROTOCOL), self.root)
         self.assertEqual(o["forward"]["round"], "c-test")

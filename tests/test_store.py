@@ -1,8 +1,8 @@
 import json
 import unittest
 
-from psyscientist.sources import openalex, semantic_scholar
-from psyscientist.store import Store, normalize_doi, title_key
+from ichnos.sources import openalex, semantic_scholar
+from ichnos.store import Store, normalize_doi, title_key
 
 
 def record(**kw):

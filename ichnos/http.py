@@ -44,7 +44,7 @@ class Http:
         self.max_retries = max_retries
         self.sleep = sleep
         self.clock = clock
-        self.user_agent = f"PsyScientist/{__version__}"
+        self.user_agent = f"Ichnos/{__version__}"
         self.intervals: dict[str, float] = {}     # source prefix -> least seconds between its requests
         self._last: dict[str, float] = {}
         self.breakers: dict[str, int] = {}        # source prefix -> refusals in a row after which it is paused

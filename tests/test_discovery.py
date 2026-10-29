@@ -4,10 +4,10 @@ import collections
 import json
 import unittest
 
-from psyscientist import agents, discovery, insights, projects
-from psyscientist.app import App
-from psyscientist.config import Settings
-from psyscientist.store import Store, now
+from ichnos import agents, discovery, insights, projects
+from ichnos.app import App
+from ichnos.config import Settings
+from ichnos.store import Store, now
 from tests.test_agents_map import Base
 
 FINDINGS = '''
@@ -270,8 +270,8 @@ class Pipeline(Discovery):
             for item, run in (("d1", self.run), ("d2", self.run), ("c5", self.run)):
                 self.store.db.execute("INSERT INTO novelty_checks (tournament, run_id, item, statement, created_at) "
                                       "VALUES ('discovery', ?, ?, 's', ?)", (run, item, now()))
-        with mock.patch("psyscientist.novelty.search", return_value=collections.Counter(checks=3)) as s, \
-                mock.patch("psyscientist.novelty.fill_plain", return_value=collections.Counter()):
+        with mock.patch("ichnos.novelty.search", return_value=collections.Counter(checks=3)) as s, \
+                mock.patch("ichnos.novelty.fill_plain", return_value=collections.Counter()):
             self.assertEqual(discovery.search(self.store, None, log=lambda *a: None), {"checks": 3})
         self.assertEqual(s.call_args.args[1:4:2], (self.run, "discovery"))
 

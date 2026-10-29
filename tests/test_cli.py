@@ -4,7 +4,7 @@ import ast
 import unittest
 from pathlib import Path
 
-MAIN = Path(__file__).resolve().parents[1] / "psyscientist" / "__main__.py"
+MAIN = Path(__file__).resolve().parents[1] / "ichnos" / "__main__.py"
 
 
 class Commands(unittest.TestCase):

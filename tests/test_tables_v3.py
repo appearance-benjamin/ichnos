@@ -2,7 +2,7 @@
 
 import unittest
 
-from psyscientist import paper, tables
+from ichnos import paper, tables
 
 
 class TablesTest(unittest.TestCase):

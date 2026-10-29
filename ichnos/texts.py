@@ -6,7 +6,7 @@
 
 Each step skips what is settled and asks again where a service stopped it (a 429, a timeout), so a second run
 picks up where the first was stopped. What is still missing afterwards is behind a paywall: the reader's library
-list (`python -m psyscientist library <run>`) names it, with links.
+list (`python -m ichnos library <run>`) names it, with links.
 """
 
 from __future__ import annotations

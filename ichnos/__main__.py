@@ -1,4 +1,4 @@
-"""Command line: python -m psyscientist <command> ..."""
+"""Command line: python -m ichnos <command> ..."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ from .store import Store
 def main(argv: list[str] | None = None) -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-    parser = argparse.ArgumentParser(prog="psyscientist")
+    parser = argparse.ArgumentParser(prog="ichnos")
     sub = parser.add_subparsers(dest="command", required=True)
 
     p = sub.add_parser("pilot", help="search all sources for a corpus and draw the screening sheet")
@@ -82,7 +82,7 @@ def main(argv: list[str] | None = None) -> int:
                                   "protocol later); the studies' other charted values stay as they are")
     p.add_argument("--second-coder", action="store_true",
                    help="extract with --dims: an independent second coding, stored apart from the charting and "
-                        "compared with it (python -m psyscientist patterns <run>)")
+                        "compared with it (python -m ichnos patterns <run>)")
 
     p = sub.add_parser("fulltext", help="find, fetch and parse open-access full texts for a run's kept studies")
     p.add_argument("run", type=int)
@@ -185,11 +185,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("paper", type=int, help="paper id, as in the app's Paper tab")
     p.add_argument("--full", action="store_true", help="include the response to reviewers and the appendices")
 
-    p = sub.add_parser("desktop", help="open Psych-Scientist in a window of its own (no console); it stops when "
+    p = sub.add_parser("desktop", help="open Ichnos in a window of its own (no console); it stops when "
                                         "the window closes")
     p.add_argument("--reviewer", help="the name decisions are saved under (default: the one entered in the app)")
 
-    p = sub.add_parser("shortcuts", help="put Psych-Scientist with its icon on the desktop and in the Start menu")
+    p = sub.add_parser("shortcuts", help="put Ichnos with its icon on the desktop and in the Start menu")
     p.add_argument("--no-desktop", action="store_true", help="only the Start menu")
 
     p = sub.add_parser("check-pack", help="write a check pack: one HTML file in which a person checks the headline "
@@ -333,7 +333,7 @@ def main(argv: list[str] | None = None) -> int:
             parser.exit(1, f"agent-tasks: {err}\n")
         meta = (folder / "task.json").read_text(encoding="utf-8")
         print(f"Task written: {folder}\n{meta}\nEach batch_NN.json needs a batch_NN_result.json next to it; "
-              f"then run: python -m psyscientist agent-import \"{folder}\"")
+              f"then run: python -m ichnos agent-import \"{folder}\"")
     elif args.command == "fulltext":
         store = Store(settings.db_path)
         run = store.db.execute("SELECT corpus FROM runs WHERE run_id = ?", (args.run,)).fetchone()
@@ -367,7 +367,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Duplicate records found by title ({len(out['duplicates'])}): "
                   + ", ".join(f"#{a} = #{b}" for a, b in out["duplicates"]))
         report = _refresh(store, args.run)
-        print(f"Report: {report}\nThe rest is behind paywalls: python -m psyscientist library {args.run} lists it, "
+        print(f"Report: {report}\nThe rest is behind paywalls: python -m ichnos library {args.run} lists it, "
               f"with links, for your library.")
     elif args.command == "evidence-map":
         from . import checks, rulemap
@@ -406,7 +406,7 @@ def main(argv: list[str] | None = None) -> int:
             print("Failed (run the same command again to ask again):\n  " + "\n  ".join(
                 f"{name}: {problems[0] if problems else '?'}" for name, problems in counts["failures"][:20]))
         if task_state(args.folder) == "answered":
-            print(f"Every batch is answered; next: python -m psyscientist agent-import \"{args.folder}\"")
+            print(f"Every batch is answered; next: python -m ichnos agent-import \"{args.folder}\"")
         return 1 if counts["failed"] else 0
     elif args.command == "agent-import" and args.recheck_quotes:
         store = Store(settings.db_path)
@@ -640,7 +640,7 @@ def main(argv: list[str] | None = None) -> int:
                                findings_sample=args.findings_sample)
         print(f"Check pack: {path}")
         print("Send this one file to the person who checks; it opens in any browser. They send back the file "
-              "'Download my checks' saves, and you run: python -m psyscientist import-checks <that file>")
+              "'Download my checks' saves, and you run: python -m ichnos import-checks <that file>")
     elif args.command == "import-checks":
         from . import checkpack
         try:
@@ -689,7 +689,7 @@ def main(argv: list[str] | None = None) -> int:
         except ValueError as err:
             parser.exit(1, f"update-search: {err}\n")
         print(f"{len(new)} records new to run {args.run}" + (": " + ",".join(map(str, new)) if new else "")
-              + f". Next: python -m psyscientist update {args.run}")
+              + f". Next: python -m ichnos update {args.run}")
     elif args.command == "update":
         from . import referee, update
         from .store import now
@@ -743,7 +743,7 @@ def main(argv: list[str] | None = None) -> int:
                                   contact_email=settings.contact_email)
             print("References: " + ", ".join(f"{k} {v}" for k, v in counts.items()))
             print(f"Not found by the search, for agents to judge: {len(recall.to_judge(store, args.run, protocol))} "
-                  f"(python -m psyscientist agent-tasks recall {args.run} --agent ...)")
+                  f"(python -m ichnos agent-tasks recall {args.run} --agent ...)")
             for row in recall.trial(store, args.run, protocol, openalex_key=settings.openalex_api_key,
                                     contact_email=settings.contact_email):
                 print(f"Trial, {row['label']}: {row['total']} records in OpenAlex"
@@ -812,7 +812,7 @@ def main(argv: list[str] | None = None) -> int:
         except ValueError as err:
             parser.exit(1, f"discover: {err}\n")
         print(f"Task written: {folder}\n{(folder / 'task.json').read_text(encoding='utf-8')}\nEach batch_NN.json needs a "
-              f"batch_NN_result.json next to it; then run: python -m psyscientist agent-import \"{folder}\"")
+              f"batch_NN_result.json next to it; then run: python -m ichnos agent-import \"{folder}\"")
     elif args.command == "discover" and args.search:
         store = Store(settings.db_path)
         counts = discovery.search(store, settings)
@@ -834,7 +834,7 @@ def main(argv: list[str] | None = None) -> int:
                       + ("" if d["status"] == "open" else f" ({d['status'].replace('_', ' ')})")
                       + f"\n      {d['summary']}")
         print(f"\nLog: {discovery.write_log(store, ROOT / 'notes' / 'discoveries.md')}\n"
-              "Choose in the app (Discovery) or with: python -m psyscientist discovery <id> chosen --note \"...\"")
+              "Choose in the app (Discovery) or with: python -m ichnos discovery <id> chosen --note \"...\"")
     elif args.command == "discovery":
         store = Store(settings.db_path)
         try:

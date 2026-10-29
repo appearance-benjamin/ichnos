@@ -6,8 +6,8 @@ import threading
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from psyscientist import agents, runner
-from psyscientist.runner import RunnerError, RunSettings, run_task
+from ichnos import agents, runner
+from ichnos.runner import RunnerError, RunSettings, run_task
 from tests.test_agents_map import Base
 
 METRICS = ("empirical", "population", "design")

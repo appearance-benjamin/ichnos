@@ -8,11 +8,11 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from psyscientist import imports, pilot
-from psyscientist.config import ROOT, Settings
-from psyscientist.http import ApiError
-from psyscientist.sources import SearchResult
-from psyscientist.store import Store
+from ichnos import imports, pilot
+from ichnos.config import ROOT, Settings
+from ichnos.http import ApiError
+from ichnos.sources import SearchResult
+from ichnos.store import Store
 
 ABSTRACT = "We follow unemployed adults over five panel waves and model purpose in life trajectories."
 

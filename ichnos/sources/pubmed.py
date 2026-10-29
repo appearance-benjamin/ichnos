@@ -21,7 +21,7 @@ FETCH_BATCH = 200
 
 def search(http: Http, query: str, cap: int, api_key: str | None = None,
            contact_email: str | None = None) -> SearchResult:
-    common = {"db": "pubmed", "tool": "psyscientist"}
+    common = {"db": "pubmed", "tool": "ichnos"}
     if api_key:
         common["api_key"] = api_key
     if contact_email:

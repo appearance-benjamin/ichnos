@@ -86,7 +86,7 @@ question = "Does it report subgroups, trajectories (including trajectory classes
 fail_reason = "no_heterogeneity"
 
 # Optional: extend the built-in signal word lists (trajectory, heterogeneity,
-# longitudinal, cross_sectional) or add your own; see psyscientist/signals.py.
+# longitudinal, cross_sectional) or add your own; see ichnos/signals.py.
 [signals.add]
 trajectory = ["before and after retirement", "after job loss"]
 

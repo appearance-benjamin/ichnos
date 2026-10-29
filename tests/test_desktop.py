@@ -6,9 +6,9 @@ import time
 import urllib.request
 from http.server import ThreadingHTTPServer
 
-from psyscientist import desktop
-from psyscientist.app import App, handler_for
-from psyscientist.config import Settings
+from ichnos import desktop
+from ichnos.app import App, handler_for
+from ichnos.config import Settings
 from tests.test_agents_map import Base
 
 
@@ -35,7 +35,7 @@ class Desktop(Base):
 
     def test_icon_manifest_and_hello(self):
         with urllib.request.urlopen(self.base + "/api/hello") as r:
-            self.assertEqual(json.loads(r.read())["app"], "psyscientist")
+            self.assertEqual(json.loads(r.read())["app"], "ichnos")
         with urllib.request.urlopen(self.base + "/favicon.ico") as r:
             self.assertEqual(r.read()[:4], b"\x00\x00\x01\x00")          # an .ico file
         with urllib.request.urlopen(self.base + "/manifest.webmanifest") as r:
@@ -70,7 +70,7 @@ class StopsWithItsWindow(Base):
             threading.Thread(target=page, daemon=True).start()
             return None
 
-        import psyscientist.app as appmod
+        import ichnos.app as appmod
         made = []
         real_app = appmod.App
 

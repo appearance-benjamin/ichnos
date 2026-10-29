@@ -4,7 +4,7 @@ names in capitals, entities, works without authors (APA: listed by title) and ti
 import json
 import unittest
 
-from psyscientist import writer
+from ichnos import writer
 
 
 class Names(unittest.TestCase):

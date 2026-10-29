@@ -1,6 +1,6 @@
 """The local app: the pipeline in the browser, for people who do not use a terminal.
 
-Start it by double-clicking Psych-Scientist.bat, or with `python -m psyscientist app`.
+Start it by double-clicking Ichnos.bat, or with `python -m ichnos app`.
 It serves the review page on http://127.0.0.1:<port> and adds what a static page
 cannot do:
 
@@ -389,7 +389,7 @@ def last_activity(store: Store, run_id: int) -> str:
 
 def handler_for(app: App):
     class Handler(BaseHTTPRequestHandler):
-        server_version = "PsyScientist"
+        server_version = "Ichnos"
 
         def log_message(self, fmt, *args):  # keep the app's window quiet
             pass
@@ -481,7 +481,7 @@ def handler_for(app: App):
                                             for j in app.jobs])
                 if url.path == "/api/hello":
                     from . import __version__
-                    return self._send(200, {"app": "psyscientist", "version": __version__})
+                    return self._send(200, {"app": "ichnos", "version": __version__})
                 if url.path in ("/favicon.ico", "/icon.ico"):
                     from .desktop import ICON
                     return self._send(200, ICON.read_bytes(), "image/x-icon") if ICON.exists() else \
@@ -493,7 +493,7 @@ def handler_for(app: App):
                     return self._send(200, f.read_bytes(), "image/png") if f.exists() else \
                         self._send(404, {"error": "no such icon"})
                 if url.path == "/manifest.webmanifest":
-                    return self._send(200, {"name": "Psych-Scientist", "short_name": "Psych-Scientist", "start_url": "/",
+                    return self._send(200, {"name": "Ichnos", "short_name": "Ichnos", "start_url": "/",
                                             "display": "standalone", "background_color": "#131315",
                                             "theme_color": "#4361ee",
                                             "icons": [{"src": f"/icon-{n}.png", "sizes": f"{n}x{n}", "type": "image/png"}
@@ -570,8 +570,8 @@ def serve(settings: Settings, root: Path = ROOT, port: int = 8766, open_browser:
     app.port = server.server_address[1]
     url = f"http://127.0.0.1:{app.port}/"
     if app.port != port:
-        print(f"Port {port} is in use, perhaps by another Psych-Scientist window; close that one if you do not need it.")
-    print(f"Psych-Scientist is running at {url}\nIt works only on this computer. Close this window to stop it.")
+        print(f"Port {port} is in use, perhaps by another Ichnos window; close that one if you do not need it.")
+    print(f"Ichnos is running at {url}\nIt works only on this computer. Close this window to stop it.")
     if open_browser:
         threading.Timer(0.8, lambda: webbrowser.open(url)).start()
     try:

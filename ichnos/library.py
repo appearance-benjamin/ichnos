@@ -116,7 +116,7 @@ def todo_markdown(rows: list[dict], inbox: Path, downloads: Path | None = None) 
              f"(the DOI link opens through it with the library's browser extension, or use the Library link). "
              f"{where}. A file named with the record number shown (for example `20.pdf`) is matched at once; "
              "otherwise the pipeline matches it by its DOI or title. Then press **Add downloaded PDFs** in the app, "
-             "or run `python -m psyscientist add-pdfs` (every run at once).", "",
+             "or run `python -m ichnos add-pdfs` (every run at once).", "",
              "The PDFs stay on this computer; they are never shared or uploaded.", ""]
     free = sum(1 for r in rows if "Free copy" in r["links"])
     if free:
@@ -353,5 +353,5 @@ def next_steps(store: Store, run_id: int, works: list[int]) -> list[str]:
     for kind, table in (("extract", "study_features"), ("findings", "findings")):
         agent = tables._latest(store, table, run_id)
         if agent and works:
-            out.append(f"python -m psyscientist agent-tasks {kind} {run_id} --works {ids} --agent {agent}")
+            out.append(f"python -m ichnos agent-tasks {kind} {run_id} --works {ids} --agent {agent}")
     return out

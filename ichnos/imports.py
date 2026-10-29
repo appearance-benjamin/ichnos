@@ -281,7 +281,7 @@ def add_export(corpus: str, files: list[Path], source: str, platform: str | None
         raise ValueError("could not write a valid protocol entry; nothing was changed")
     proto_path.write_text(new_text, encoding="utf-8")
     log(f"Registered {total} records as {source!r} in {proto_path.relative_to(root).as_posix()}.")
-    log(f"Now run: python -m psyscientist pilot {corpus}")
+    log(f"Now run: python -m ichnos pilot {corpus}")
     return entry
 
 
@@ -293,7 +293,7 @@ def write_strings(corpus: str, root: Path = ROOT) -> tuple[Path, str]:
            f"Protocol {protocol.get('version', '?')}. Every term is limited to titles and abstracts.\n",
            "After running one of these in the library, note the number of results, export them "
            "(RIS works everywhere), and register the file:\n",
-           f"```\npython -m psyscientist add-export {corpus} <file> --source <name> --platform <platform> "
+           f"```\npython -m ichnos add-export {corpus} <file> --source <name> --platform <platform> "
            f"--hits <number>\n```\n",
            "Compare the number of results with the API sources in the latest report. A count far off "
            "usually means the database parsed something differently (hyphens, truncation); fix the "

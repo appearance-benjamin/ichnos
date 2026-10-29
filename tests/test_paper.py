@@ -2,8 +2,8 @@
 
 import json
 
-from psyscientist import agents, paper
-from psyscientist.review import build_data
+from ichnos import agents, paper
+from ichnos.review import build_data
 from tests.test_findings_insights import FindingsAndInsights
 
 BACKGROUND = '''
@@ -156,7 +156,7 @@ class PotentialCore(FindingsAndInsights):
 
     def test_a_study_read_only_as_an_abstract_is_a_potential_core_study(self):
         import tomllib
-        from psyscientist import library, tables
+        from ichnos import library, tables
         self.findings_task()
         reads = self.store.db.execute("SELECT read_from, count(*) FROM findings_reads WHERE run_id = ? GROUP BY "
                                       "read_from", (self.run,)).fetchall()

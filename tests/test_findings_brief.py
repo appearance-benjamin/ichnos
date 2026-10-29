@@ -2,7 +2,7 @@
 
 import unittest
 
-from psyscientist import agents
+from ichnos import agents
 
 PROTOCOL = {"findings": {"question": "q", "max_per_study": 6,
                          "brief": {"max_per_study": 3, "focus": "levels and correlates"},

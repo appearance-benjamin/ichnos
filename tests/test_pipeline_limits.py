@@ -7,8 +7,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from psyscientist import agents, tables
-from psyscientist.store import BUSY_TIMEOUT_S, Store
+from ichnos import agents, tables
+from ichnos.store import BUSY_TIMEOUT_S, Store
 
 PROTOCOL = '''
 corpus = "Y"

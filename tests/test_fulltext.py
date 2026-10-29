@@ -5,11 +5,11 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from psyscientist import agents, fulltext
-from psyscientist.config import Settings
-from psyscientist.fulltext import Candidate
-from psyscientist.http import ApiError
-from psyscientist.store import Store
+from ichnos import agents, fulltext
+from ichnos.config import Settings
+from ichnos.fulltext import Candidate
+from ichnos.http import ApiError
+from ichnos.store import Store
 from tests.test_agents_map import PROTOCOL, Base
 
 JATS = b"""<?xml version="1.0"?>
@@ -85,7 +85,7 @@ class Retrieval(Base):
             return b"<html>landing page</html>"
 
         with mock.patch.object(fulltext, "locate", fake_locate), \
-             mock.patch("psyscientist.http.Http.get", fake_get):
+             mock.patch("ichnos.http.Http.get", fake_get):
             counts = fulltext.retrieve(self.store, [1, 2, 3], self.settings(), "Z", self.run, root=self.root,
                                        log=lambda *_: None)
         self.assertEqual(counts, {"parsed (europepmc, jats)": 1, "failed": 1, "no_open_access": 1})
@@ -110,7 +110,7 @@ class Retrieval(Base):
             raise ApiError(source, 403, "web page: Just a moment...")
 
         with mock.patch.object(fulltext, "locate", fake_locate), \
-             mock.patch("psyscientist.http.Http.get", fake_get), \
+             mock.patch("ichnos.http.Http.get", fake_get), \
              mock.patch.object(fulltext, "parse_pdf", lambda pdf, grobid: ([{"head": "Results", "text": "x"}],
                                                                            "pypdf", None)):
             fulltext.retrieve(self.store, [1, 2], self.settings(), "Z", self.run, root=self.root, log=lambda *_: None)
@@ -119,7 +119,7 @@ class Retrieval(Base):
         self.assertEqual((two["status"], two["url"]), ("failed", "https://publisher.example.com/2.pdf"))
         self.assertIn("bot check", two["error"])
         self.store.add_screening(self.run, 2, "Z", "title_abstract", "model:s", "include")
-        from psyscientist import library
+        from ichnos import library
         row = next(r for r in library.todo(self.store, self.run, {}) if r["work_id"] == 2)
         self.assertEqual(list(row["links"])[0], "Free copy")
 
@@ -153,7 +153,7 @@ class PdfLinks(unittest.TestCase):
 class HttpUrls(unittest.TestCase):
     def test_urls_with_query_strings_and_spaces(self):
         store = Store(":memory:")
-        from psyscientist.http import Http
+        from ichnos.http import Http
         seen = []
 
         def fake_urlopen(req, timeout=0):

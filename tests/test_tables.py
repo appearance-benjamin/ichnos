@@ -3,8 +3,8 @@
 import json
 import unittest
 
-from psyscientist import tables, writer
-from psyscientist.store import Store
+from ichnos import tables, writer
+from ichnos.store import Store
 
 SETTING = {"id": "setting", "dimension": "setting", "values": ["retirement", "job_loss"], "metric": "setting"}
 EMPIRICAL = {"id": "empirical", "metric": "empirical"}

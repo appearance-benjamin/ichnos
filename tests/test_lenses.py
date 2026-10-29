@@ -2,7 +2,7 @@
 
 import json
 
-from psyscientist import agents, lenses
+from ichnos import agents, lenses
 from tests.test_findings_insights import FindingsAndInsights
 
 LENS_FILE = '''
@@ -176,9 +176,9 @@ class Tournament(FindingsAndInsights):
         self.assertEqual(self.answer(carto, {"cards": [card]})["problems"], [])
 
         # gate 3: the literature, with a stubbed search
-        from psyscientist import novelty
-        from psyscientist.config import Settings
-        from psyscientist.http import Http
+        from ichnos import novelty
+        from ichnos.config import Settings
+        from ichnos.http import Http
         q = agents.write_tasks(self.store, self.run, "novelty_queries", "model:q", root=self.root)
         items = json.loads((q / "batch_01.json").read_text(encoding="utf-8"))["items"]
         self.assertEqual(len(items), 2)
@@ -225,7 +225,7 @@ class Tournament(FindingsAndInsights):
         self.assertIn("## Test cards: circadian vs social", text)
 
         # the app's Interpretations page: the gates as a funnel, every hypothesis's fate, the hits behind a verdict
-        from psyscientist.review import build_data, render_page
+        from ichnos.review import build_data, render_page
         page = build_data(self.store, self.run, root=self.root)
         data = page["interpret"]
         gates = {g["lens"]: g for g in data["gates"] if g["source"] == "tournament"}
@@ -281,9 +281,9 @@ class Tournament(FindingsAndInsights):
 
     def test_plain_rewrite(self):
         """novelty_plain rewrites only the plain query of checks whose plain search found nothing."""
-        from psyscientist import novelty
-        from psyscientist.config import Settings
-        from psyscientist.http import Http
+        from ichnos import novelty
+        from ichnos.config import Settings
+        from ichnos.http import Http
         novelty.ensure(self.store)
         long = "teens social contact mood friendship quality loneliness school peers"
 
@@ -352,7 +352,7 @@ class Tournament(FindingsAndInsights):
         self.assertEqual(self.store.db.execute("SELECT plain FROM novelty_checks WHERE check_id = ?", (q4,)).fetchone()[0], long)
 
     def test_interpret_page_without_lenses(self):
-        from psyscientist.review import build_data
+        from ichnos.review import build_data
         self.assertIsNone(build_data(self.store, self.run, root=self.root / "elsewhere")["interpret"])
         self.findings_task()
         data = build_data(self.store, self.run, root=self.root)["interpret"]
@@ -366,7 +366,7 @@ class Tournament(FindingsAndInsights):
         page = build_data(self.store, self.run, root=broken)
         self.assertIn("TOMLDecodeError", page["interpret"]["error"])
         # whatever the agents or the APIs wrote, the embedded data cannot close the script or open a comment
-        from psyscientist.review import render_page
+        from ichnos.review import render_page
         page["title"] = "</script><!--<script>alert(1)</script>"
         html = render_page(page)
         self.assertNotIn("<!--<script>", html)

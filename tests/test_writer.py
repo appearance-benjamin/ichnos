@@ -2,7 +2,7 @@
 
 import json
 
-from psyscientist import agents, insights, writer
+from ichnos import agents, insights, writer
 from tests.test_findings_insights import FindingsAndInsights
 
 

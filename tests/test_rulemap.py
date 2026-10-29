@@ -2,8 +2,8 @@
 
 import unittest
 
-from psyscientist import rulemap
-from psyscientist.store import Store
+from ichnos import rulemap
+from ichnos.store import Store
 
 PROTOCOL = {"title": "Rules", "findings": {
     "matrix": ["candidate_rule", "outcome"],

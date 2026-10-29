@@ -558,7 +558,7 @@ def without_table(rows: list[dict], label: str = "Table 5", elig_label: str = "T
 
 FIX_KEYS = ("doi", "openalex_id", "s2_id", "pmid")
 FIX_FIELDS = ("authors", "title", "year", "venue", "type", "language")
-FIX_BIBLIO = ("volume", "issue", "pages")     # corrections to what Crossref gave (python -m psyscientist biblio)
+FIX_BIBLIO = ("volume", "issue", "pages")     # corrections to what Crossref gave (python -m ichnos biblio)
 
 
 def apply_fixes(store: Store, protocol: dict) -> int:
@@ -1561,7 +1561,7 @@ def recall_table(store: Store, run_id: int, protocol: dict, label: str) -> str:
                  f"{s['relevant_missed']} |")
     if s["missed_ids"] or s["unsure_ids"]:
         meta = works(store, s["missed_ids"] + s["unsure_ids"])
-        tree = __import__("psyscientist.query", fromlist=["parse"]).parse(" ".join(protocol["query"].split()))
+        tree = __import__("ichnos.query", fromlist=["parse"]).parse(" ".join(protocol["query"].split()))
         from .query import matches
         lines += ["", "Relevant or unsure references the search did not find:", "",
                   "| Record | Year | Title | Agents | Search phrase in title or abstract |", "| --- | ---: | --- | --- | --- |"]

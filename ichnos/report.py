@@ -268,7 +268,7 @@ def build_report(store: Store, run_id: int) -> str:
         f"{' / '.join(rules.get('decisions', []))}; for exclude, also fill `exclude_reason` with one of "
         f"{', '.join(f'`{r}`' for r in rules.get('exclude_reasons', []))}. "
         "Save as CSV (either CSV UTF-8 or plain CSV works), then run:\n")
-    add(f"```\npython -m psyscientist import-screening output/corpus_{run['corpus']}/run_{run_id:03d}/screening_sheet.csv\n```\n")
+    add(f"```\npython -m ichnos import-screening output/corpus_{run['corpus']}/run_{run_id:03d}/screening_sheet.csv\n```\n")
     add("Rule from the protocol:\n")
     add("> " + " ".join(rules.get("rule", "").split()) + "\n")
     return "\n".join(out)

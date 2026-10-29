@@ -6,8 +6,8 @@ import unittest
 from types import SimpleNamespace
 from unittest import mock
 
-from psyscientist import agents, paper, update
-from psyscientist.sources import SearchResult
+from ichnos import agents, paper, update
+from ichnos.sources import SearchResult
 from tests.test_agents_map import Base, PROTOCOL
 from tests.test_eligibility import ELIGIBILITY
 

@@ -5,8 +5,8 @@ version."""
 import unittest
 from unittest import mock
 
-from psyscientist import tables
-from psyscientist.store import Store
+from ichnos import tables
+from ichnos.store import Store
 
 PROTOCOL = {
     "map": {"dimensions": [
@@ -79,9 +79,9 @@ class RoundFourTables(unittest.TestCase):
             {"doi": "10.1/c", "kind": "repository preprint", "published": "", "decision": "kept"},
             {"doi": "10.9/none", "kind": "data deposit", "published": "", "decision": "kept"}]})
         kept, dropped = [self.ids["B"], self.ids["C"]], {self.ids["A"]: {}}
-        with mock.patch("psyscientist.agents.kept_ids", return_value=kept), \
-                mock.patch("psyscientist.agents.sheet_ids", return_value=list(self.ids.values())), \
-                mock.patch("psyscientist.agents.protocol_exclusions", return_value=dropped):
+        with mock.patch("ichnos.agents.kept_ids", return_value=kept), \
+                mock.patch("ichnos.agents.sheet_ids", return_value=list(self.ids.values())), \
+                mock.patch("ichnos.agents.protocol_exclusions", return_value=dropped):
             rows, n = tables.repository_records(self.store, self.run, protocol)
             text = tables.repository_table(self.store, self.run, protocol, "Table S7")
         self.assertEqual((n["all"], n["excluded"], n["retained"], n["deposit"], n["found"], n["findings"]),

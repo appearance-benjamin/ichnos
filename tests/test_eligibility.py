@@ -2,7 +2,7 @@
 
 import json
 
-from psyscientist import agents, paper
+from ichnos import agents, paper
 from tests.test_agents_map import PROTOCOL, Base
 
 ELIGIBILITY = '''

@@ -2,10 +2,10 @@
 
 import json
 
-from psyscientist import agents, checks, document, library, paper, tables, writer
-from psyscientist.app import App
-from psyscientist.config import Settings
-from psyscientist.review import build_data
+from ichnos import agents, checks, document, library, paper, tables, writer
+from ichnos.app import App
+from ichnos.config import Settings
+from ichnos.review import build_data
 from tests.test_paper import Papers
 
 

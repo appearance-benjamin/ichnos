@@ -2,7 +2,7 @@
 
 import unittest
 
-from psyscientist import document
+from ichnos import document
 
 FLOW = """**Figure 1.** PRISMA-ScR flow diagram: the flow of records.
 

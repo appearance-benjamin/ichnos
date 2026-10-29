@@ -8,7 +8,7 @@ they do not answer the protocol's question.
 Sources:
 - every agent task may return `insights` next to its answers (stage screen, extract or findings);
 - the synthesis task reads all findings of a run together and proposes cross-study insights;
-- you add your own: `python -m psyscientist insight add ...`.
+- you add your own: `python -m ichnos insight add ...`.
 
 Each insight cites the studies (and, from synthesis, the finding rows) behind
 it, with quotes that are checked against the records. Its status moves through
@@ -220,7 +220,7 @@ def write_log(store: Store, corpus: str, path: Path) -> Path:
     items = rows(store, corpus)
     out = [f"# Insight log: corpus {corpus}", "",
            "Generated from the evidence store; do not edit by hand. Change a status with "
-           "`python -m psyscientist insight status <id> <status> --note \"...\"`.", ""]
+           "`python -m ichnos insight status <id> <status> --note \"...\"`.", ""]
     if not items:
         out.append("No insights captured yet.")
     titles = {}

@@ -7,8 +7,8 @@ import unittest
 from collections import Counter
 from unittest import mock
 
-from psyscientist import agents, evolution
-from psyscientist.http import ApiError
+from ichnos import agents, evolution
+from ichnos.http import ApiError
 from tests.test_agents_map import Base
 
 LENS_FILE = '''

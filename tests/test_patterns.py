@@ -3,9 +3,9 @@
 import tomllib
 import unittest
 
-from psyscientist import insights, patterns
-from psyscientist.config import ROOT
-from psyscientist.store import now
+from ichnos import insights, patterns
+from ichnos.config import ROOT
+from ichnos.store import now
 from tests.test_agents_map import Base, PROTOCOL
 
 SHARE = {"id": "P1", "name": "UK mostly", "statement": "Most coded studies are from the UK.",
@@ -44,7 +44,7 @@ class Check(unittest.TestCase):
         self.assertEqual(patterns.validate("C", ROOT), [])
 
     def test_the_approval_tables_do_not_swallow_the_search(self):
-        from psyscientist.config import load_protocol
+        from ichnos.config import load_protocol
         for corpus in ("C", "D"):
             p = load_protocol(corpus, ROOT)[2]
             self.assertTrue(p.get("query") and p.get("sources"), corpus)
@@ -122,7 +122,7 @@ class SecondCoder(Base):
 
     def test_a_second_coding_is_stored_apart_and_compared(self):
         import json
-        from psyscientist import agents
+        from ichnos import agents
         for w, c in ((1, "uk"), (2, "us"), (3, "uk"), (4, "nl")):
             self.chart(w, c)
         with self.assertRaises(ValueError):
