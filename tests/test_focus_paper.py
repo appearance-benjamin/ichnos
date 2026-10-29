@@ -158,6 +158,14 @@ class FocusPaper(unittest.TestCase):
         row = self.store.db.execute("SELECT * FROM papers WHERE paper_id = ?", (pid,)).fetchone()
         self.assertEqual(checks.headline_names(PROTOCOL, row), ["Abstract", "Main findings", "Conclusion"])
 
+    def test_the_pack_shows_the_strata_codes_but_not_another_rules_not_applicable(self):
+        from psyscientist import checkpack
+        codes = checkpack._codes({"candidate_rule": "kin_support", "direction": "raises", "focal_sex": "women",
+                                  "kin_type": "grandparental_help", "status_measure": "not_applicable"})
+        self.assertIn("focal sex: women", codes)
+        self.assertIn("kin type: grandparental help", codes)
+        self.assertNotIn("status measure", codes)
+
     def test_a_further_aim_brings_its_own_focus(self):
         kin = {"rules": ["kin_support"], "ancestral": ["historical"]}
         p = dict(PROTOCOL, aims=[{"id": "kin", "kind": "focus", "question": "Which kin?", "focus": kin}])

@@ -100,7 +100,14 @@ def _link(w: dict) -> str:
 
 # What goes in a pack
 
-CODE_FIELDS = ("candidate_rule", "direction", "context", "evidence_type", "outcome", "modern_input")
+CODE_FIELDS = ("candidate_rule", "direction", "context", "evidence_type", "outcome", "modern_input",
+               "population_stage", "focal_sex", "readiness_input", "status_measure", "kin_type")
+ONE_RULE = {"readiness_input", "status_measure", "kin_type"}      # not shown where the finding is on another rule
+
+
+def _codes(fields: dict) -> str:
+    return " · ".join(f"{k.replace('_', ' ')}: {str(fields[k]).replace('_', ' ')}" for k in CODE_FIELDS
+                      if fields.get(k) and not (k in ONE_RULE and fields[k] == "not_applicable"))
 
 
 def _findings(store: Store, row, protocol: dict, sample: int = 0, seed: int = 0) -> list[dict]:
@@ -111,8 +118,7 @@ def _findings(store: Store, row, protocol: dict, sample: int = 0, seed: int = 0)
         items += checks.sample_findings(store, row, protocol, sample, seed, skip={i["id"] for i in items})
     out = []
     for i in items:
-        codes = " · ".join(f"{k.replace('_', ' ')}: {str(i['fields'][k]).replace('_', ' ')}"
-                           for k in CODE_FIELDS if (i.get("fields") or {}).get(k))
+        codes = _codes(i.get("fields") or {})
         out.append({"id": i["id"], "work_id": i["work"], "cite": i["cite"], "title": i["title"], "link": i["link"],
                     "fulltext": bool(i["fulltext"]), "finding": i["finding"], "effect": i["effect"] or "",
                     "for_whom": i["for_whom"] or "", "evidence": i["evidence"], "location": i["location"] or "",
