@@ -35,12 +35,14 @@ def spec(protocol: dict) -> dict | None:
 def with_aim(protocol: dict, aim_id: str | None) -> dict:
     """The protocol with the named aim as its [aim]: `[aim]` is the default, `[[aims]]` hold the others (each with an
     `id`); a manuscript keeps the id of the aim it was written for. A focus aim may bring its own `focus` table (rules,
-    contexts, strength rules, test), which then replaces the protocol's [focus]."""
+    contexts, strength rules, test), which then replaces the protocol's [focus], and its own `paper` settings
+    (target, abstract), which override the protocol's [paper]."""
     if not aim_id:
         return protocol
     for a in [protocol.get("aim") or {}] + list(protocol.get("aims") or []):
         if a.get("id") == aim_id:
-            return dict(protocol, aim=a, **({"focus": a["focus"]} if a.get("focus") else {}))
+            return dict(protocol, aim=a, **({"focus": a["focus"]} if a.get("focus") else {}),
+                        **({"paper": {**(protocol.get("paper") or {}), **a["paper"]}} if a.get("paper") else {}))
     raise ValueError(f"no aim with id {aim_id!r} in the protocol ([aim] or [[aims]])")
 
 
@@ -640,6 +642,9 @@ def facts(store: Store, run_id: int, protocol: dict) -> list[dict]:
         return []
     if a.get("kind") == "focus":
         return focus_facts(store, run_id, protocol)
+    if a.get("kind") == "strong":
+        from . import strong
+        return strong.facts(store, run_id, protocol)
     out = []
     all_rows = tables.finding_rows(store, run_id)
     if a.get("kind") in ("effectiveness", "proposal"):

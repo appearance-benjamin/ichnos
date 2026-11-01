@@ -34,12 +34,12 @@ import tomllib
 import unicodedata
 from pathlib import Path
 
-from . import directions, evolution, insights, lenses, novelty, paper, recall, recode, referee, writer
+from . import directions, evolution, insights, lenses, novelty, paper, recall, recode, referee, strong, writer
 from .config import ROOT, load_protocol
 from .fulltext import findings_text, methods_text, sections_of
 from .store import Store, now
 
-KINDS = ("screen", "eligibility", "extract", "findings", "synthesize", "write") + paper.KINDS + recode.KINDS + lenses.KINDS + novelty.KINDS + recall.KINDS + directions.KINDS
+KINDS = ("screen", "eligibility", "extract", "findings", "synthesize", "write") + paper.KINDS + recode.KINDS + lenses.KINDS + novelty.KINDS + recall.KINDS + directions.KINDS + strong.KINDS
 ELIGIBILITY = "eligibility"     # the task for the stage after title and abstract; criteria in [eligibility]
 FULL_TEXT = "full_text"         # how that stage is stored (PRISMA's full-text eligibility stage)
 RECORD_KINDS = ("study", "review", "other")
@@ -102,6 +102,8 @@ def write_tasks(store: Store, run_id: int, kind: str, agent: str, root: Path = R
         return novelty.write_task(store, run_id, kind, agent, protocol, sha, root, options or {})
     if kind in recall.KINDS:
         return recall.write_task(store, run_id, kind, agent, protocol, sha, root, options or {}, batch_size)
+    if kind in strong.KINDS:
+        return strong.write_task(store, run_id, kind, agent, protocol, sha, root, dict(options or {}, works=work_ids))
     if kind == "write":
         data = writer.build_input(store, run_id, protocol)
         out = _new_folder(root, corpus, run_id, "write", agent)
@@ -528,7 +530,7 @@ def check_protocol(protocol: dict, kind: str) -> None:
             if not d.get("name") or not d.get("question"):
                 raise ValueError("every map dimension needs `name` and `question`")
     elif kind in ("findings", "synthesize", "write") + paper.KINDS + recode.KINDS + lenses.KINDS + novelty.KINDS \
-            + directions.KINDS:
+            + directions.KINDS + strong.KINDS:
         f = protocol.get("findings") or {}
         if not f.get("question"):
             raise ValueError("the protocol has no [findings] question")
@@ -641,6 +643,8 @@ def _import_task(folder: Path, store: Store) -> dict:
         return novelty.import_task(folder, store, meta, protocol, instructions)
     if kind in recall.KINDS:
         return recall.import_task(folder, store, meta, protocol, instructions)
+    if kind in strong.KINDS:
+        return strong.import_task(folder, store, meta, protocol, instructions)
 
     problems, pending = [], []
     # One agent may answer several batches of a task and see patterns across them: its insights may cite any

@@ -121,6 +121,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--no-json-mode", action="store_true",
                    help="do not ask the server for JSON output (for servers that refuse response_format)")
 
+    p = sub.add_parser("strong-select", help="apply a strong-evidence aim's selection rule to the appraised studies "
+                                             "and list the selected studies without a full text")
+    p.add_argument("run", type=int)
+    p.add_argument("--aim", required=True, help="the id of an aim of kind \"strong\"")
+
     p = sub.add_parser("agent-import", help="check an agent's answers and store them")
     p.add_argument("folder", type=Path, help="the task folder written by agent-tasks")
     p.add_argument("--recheck-quotes", action="store_true",
@@ -408,6 +413,24 @@ def main(argv: list[str] | None = None) -> int:
         if task_state(args.folder) == "answered":
             print(f"Every batch is answered; next: python -m ichnos agent-import \"{args.folder}\"")
         return 1 if counts["failed"] else 0
+    elif args.command == "strong-select":
+        from . import aim as aim_mod, strong, tables as tables_mod
+        store = Store(settings.db_path)
+        run = store.db.execute("SELECT corpus FROM runs WHERE run_id = ?", (args.run,)).fetchone()
+        protocol = aim_mod.with_aim(load_protocol(run["corpus"])[2], args.aim)
+        out = strong.select(store, args.run, protocol)
+        meta = tables_mod.works(store, out["selected"], args.run)
+        print(f"{out['candidates']} candidates, {out['appraised']} appraised, {len(out['not_causal'])} not causal, "
+              f"{len(out['same_experiment'])} sharing a natural experiment with a stronger study")
+        for rule, ids in out["by_rule"].items():
+            print(f"\n{rule}: {len(ids)} of {out['eligible'][rule]} eligible")
+            for w in ids:
+                print(f"  {w}  {meta[w]['cite']}  {'full text' if out['fulltext'][w] else 'NO FULL TEXT'}")
+        need = [w for w in out["selected"] if not out["fulltext"][w]]
+        if need:
+            print(f"\nFull texts still needed ({len(need)}):")
+            for w in need:
+                print(f"  {w}  {meta[w]['cite']}  {meta[w]['title']}  {meta[w]['doi'] or ''}")
     elif args.command == "agent-import" and args.recheck_quotes:
         store = Store(settings.db_path)
         counts = recheck_quotes(args.folder, store)

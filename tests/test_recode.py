@@ -15,8 +15,10 @@ class Recode(FindingsAndInsights):
         folder = agents.write_tasks(self.store, self.run, "recode", "model:r", root=self.root)
         batch = json.loads((folder / "batch_01.json").read_text(encoding="utf-8"))
         self.assertEqual(sorted(b["id"] for b in batch), sorted(before)[:len(batch)])
-        self.assertIn("Y is the outcome and X the predictor", (folder / "instructions.md").read_text(encoding="utf-8"))
-        bad = {"findings": [{"id": b["id"], "fields": {"direction": "sideways", "note": ""}} for b in batch]}
+        text = (folder / "instructions.md").read_text(encoding="utf-8")
+        self.assertIn("Y is the outcome and X the predictor", text)
+        self.assertIn("if less help lowered fertility, more help raises it", text)    # a removal is turned round
+        bad ={"findings": [{"id": b["id"], "fields": {"direction": "sideways", "note": ""}} for b in batch]}
         (folder / "batch_01_result.json").write_text(json.dumps(bad), encoding="utf-8")
         self.assertTrue(agents.import_task(folder, self.store)["problems"])
 

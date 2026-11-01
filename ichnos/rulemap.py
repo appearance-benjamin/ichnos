@@ -409,12 +409,12 @@ def strata_table(store: Store, run_id: int, protocol: dict, label: str) -> str:
              "were coded for them by a language-model agent from each finding's statement and passage, and no person "
              "checked these codes. Each row repeats the test (Fisher's exact test, two-sided; odds ratio with Woolf's "
              "95% confidence interval) on the studies with a direction (raises or lowers) unless the row says "
-             "otherwise; ↑ = more of the cue goes with higher fertility. The last row of each rule keeps the studies "
+             "otherwise; ↑ = more of the cue goes with higher fertility, ↓ with lower. The last row of each rule keeps the studies "
              "with no relation or mixed results as a third category (↑ / ↓ / = or ~) and tests the 2 × 3 table "
              "exactly (Freeman-Halton). A row without a study with a direction on one side gives no test. The p values "
              "are not corrected for the number of rows and are best read together, not one by one.", "",
-             "| Rule | Analysis | Ancestral ↑ | Modern ↑ | p | Odds ratio (95% CI) |",
-             "|---|---|---:|---:|---:|---|"]
+             "| Rule | Analysis | Ancestral ↑ | Ancestral ↓ | Modern ↑ | Modern ↓ | p | Odds ratio (95% CI) |",
+             "|---|---|---:|---:|---:|---:|---:|---|"]
     moves: list[tuple[str, float, list]] = []
     for r, by_study in chosen.items():
         finds = [f for _, fs in by_study.values() for f in fs]
@@ -450,17 +450,19 @@ def strata_table(store: Store, run_id: int, protocol: dict, label: str) -> str:
                   None, focus, test)]
         for name, fs, unit, fc, t in rows:
             a, b, c, d, _, _ = _tally(_cells(fs, fc, unit), t)
+            # the share that goes the other way too, so the majority can be read off the row
+            cells = f"{share(a, a + b)} | {share(b, a + b)} | {share(c, c + d)} | {share(d, c + d)}"
             if a + b and c + d:
                 lo, hi = odds_ci(a, b, c, d)
-                lines.append(f"| {_label(r)} | {name} | {share(a, a + b)} | {share(c, c + d)} | "
+                lines.append(f"| {_label(r)} | {name} | {cells} | "
                              f"{fisher_exact(a, b, c, d):.3g} | {odds_ratio(a, b, c, d):.1f} ({lo:.1f} to {hi:.1f}) |")
             else:
-                lines.append(f"| {_label(r)} | {name} | {share(a, a + b)} | {share(c, c + d)} | – | no test |")
+                lines.append(f"| {_label(r)} | {name} | {cells} | – | no test |")
         _, _, _, _, ca, cm = _tally(_cells(finds, focus), test)
         top = [ca["raises"], ca["lowers"], ca["no_relation"] + ca["mixed"]]
         bottom = [cm["raises"], cm["lowers"], cm["no_relation"] + cm["mixed"]]
         lines.append(f"| {_label(r)} | Three categories: ↑ / ↓ / = or ~ (Freeman-Halton) | "
-                     f"{' / '.join(map(str, top))} | {' / '.join(map(str, bottom))} | "
+                     f"{' / '.join(map(str, top))} | – | {' / '.join(map(str, bottom))} | – | "
                      f"{freeman_halton(top, bottom):.3g} | – |")
         rules = focus.get("strength") or {}
         base = _verdicts(_cells(finds, focus), rules)

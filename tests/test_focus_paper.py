@@ -189,6 +189,53 @@ class FocusPaper(unittest.TestCase):
         self.assertIn("one resting on associations says what should be tried and evaluated", text)
         self.assertIn("and its main practical implication.", text)
 
+    def test_a_policy_layout_leads_with_lessons_and_moves_the_other_tests_to_the_supplement(self):
+        levers = {"id": "levers", "kind": "focus", "layout": "policy", "question": "What can institutions do?",
+                  "paper": {"target": "a policy journal", "structured_abstract": False}}
+        p = aim.with_aim(dict(PROTOCOL, focus=dict(PROTOCOL["focus"], sensitivity={"outcomes": []}),
+                              aims=[levers]), "levers")
+        self.assertEqual(p["paper"]["target"], "a policy journal")
+        labels = tables.table_labels(p)
+        self.assertEqual((labels["statements"], labels["model"]), ("Table 1", "Table 2"))
+        self.assertTrue(labels["sensitivity"].startswith("Table S"))
+        text = paper.paper_instructions(p)
+        self.assertIn("This paper is a short policy review: What can institutions do?", text)
+        self.assertIn("Lead with the majority", text)
+        self.assertIn("Cite Figure 1 and Table 1 in the text", text)
+        self.assertNotIn("Main findings", text)
+        data = {"aim": levers}
+        draft = {"title": "T", "abstract": [{"sentences": [{"text": "A."}]}], "model_table": {"rows": []},
+                 "sections": [{"name": n, "paragraphs": []} for n in ("Key points", "Lessons")]}
+        from ichnos import rulemap      # the strata give the majority's count too, not only the share that rises
+        strata = rulemap.strata_table(self.store, self.run, dict(p, focus=dict(p["focus"], strata={})), "Table S3")
+        self.assertIn("| readiness embodied capital | Causal designs only (experiment, natural experiment) | 0 of 0 | "
+                      "0 of 0 | 0 of 1 (0%) | 1 of 1 (100%) | – | no test |", strata)
+        errs = paper.check_shape(draft, data)
+        self.assertIn("section Recommendations is missing", errs)
+        self.assertIn("the recommendations table needs 3 to 9 rows, not 0", errs)
+        self.assertNotIn("section Results is missing", errs)
+
+    def test_an_essay_layout_argues_and_prints_its_sources_once_per_paragraph(self):
+        lens = {"id": "lens", "kind": "focus", "layout": "essay", "question": "What do the rules mean?"}
+        p = aim.with_aim(dict(PROTOCOL, focus=dict(PROTOCOL["focus"], sensitivity={"outcomes": []}),
+                              aims=[lens]), "lens")
+        labels = tables.table_labels(p)
+        self.assertEqual((labels["statements"], labels["model"]), ("Table 1", "Table 2"))
+        self.assertTrue(labels["sensitivity"].startswith("Table S"))
+        text = paper.paper_instructions(p)
+        self.assertIn("This paper is an argued essay built on evidence: What do the rules mean?", text)
+        self.assertIn("meets the strongest objection at full strength", text)
+        self.assertIn("The Method appendix must say plainly that the review was AI-assisted", text)
+        errs = paper.check_shape({"title": "T", "abstract": [{"sentences": [{"text": "A."}]}],
+                                  "sections": [{"name": "Diagnosis", "paragraphs": []}]}, {"aim": lens})
+        self.assertIn("section What would show this wrong is missing", errs)
+        self.assertIn("the recommendations table needs 3 to 9 rows, not 0", errs)
+        ver = paper.verify({"title": "T", "sections": [{"name": "Argument", "paragraphs": [
+            {"sentences": [{"text": "Most studies agree.", "method": ["A0"]}]}]}]},
+            {"findings": [], "background": [], "insights": [], "studies": {}, "tables": [],
+             "method_facts": [{"id": "A0", "text": "x"}]}, self.store)
+        self.assertIn("a Argument sentence without a finding or table", ver["sentences"][0]["problems"])
+
 
 if __name__ == "__main__":
     unittest.main()

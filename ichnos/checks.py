@@ -57,12 +57,15 @@ def current_protocol(store: Store, corpus: str) -> dict:
 AIM_HEADLINES = {"effectiveness": ["Abstract", "Main findings", "Conclusion"],
                  "proposal": ["Abstract", "Proposal", "Conclusion"],
                  "solutions": ["Abstract", "Recommendations", "Conclusion"],
-                 "focus": ["Abstract", "Main findings", "Conclusion"]}
+                 "focus": ["Abstract", "Main findings", "Conclusion"],
+                 "policy": ["Abstract", "Key points", "Conclusion"],
+                 "essay": ["Abstract", "Diagnosis", "Conclusion"]}
 
 
 def headline_names(protocol: dict, paper_row=None) -> list[str]:
     if paper_row is not None:
-        kind = json.loads(paper_row["method"] or "{}").get("aim_kind")
+        method = json.loads(paper_row["method"] or "{}")
+        kind = method.get("aim_layout") or method.get("aim_kind")
         if kind in AIM_HEADLINES:
             return list(AIM_HEADLINES[kind])
     return list((protocol.get("paper") or {}).get("headline") or HEADLINE)

@@ -38,6 +38,13 @@ from .store import Store, now
 KINDS = ("paper", "audit", "peer", "meta", "revise")
 SECTIONS = ("Introduction", "Results", "Discussion", "Conclusion")
 PROPOSAL_SECTIONS = ("Introduction", "Method", "Evidence", "Proposal", "Evaluation", "Discussion", "Conclusion")
+# a focus aim with layout "policy": the same evidence written as a short policy review, its lessons first
+POLICY_SECTIONS = ("Key points", "Introduction", "Lessons", "Recommendations", "Limits", "Method", "Conclusion")
+# layout "essay": the same evidence as one argument (a diagnosis, the argument, what follows, what would refute it, a
+# landing); each section may carry a `title` that states its claim, and the Method is printed as an appendix
+ESSAY_SECTIONS = ("Diagnosis", "Argument", "What follows", "What would show this wrong", "Conclusion", "Method")
+# the layouts whose writer's table is a table of recommendations, printed as Table 2
+ACTION_LAYOUTS = ("policy", "essay")
 MODEL_CELLS = ("component", "change", "why", "performance", "wellbeing", "strength", "test")
 MODEL_OPTIONAL = {"principle": "Relation to the consensus principles", "adopt": "Adopt now or in the trial",
                   "resources": "Resources"}
@@ -65,6 +72,16 @@ PERSONAS = {
                     "this kind of programme. Judge whether the paper gives a clear, usable answer: what does it do, "
                     "for whom, what should I keep or change, and how sure can I be? Penalise overclaiming, and "
                     "penalise just as much a paper so hedged that it leaves you nothing to act on.",
+    "policy": "an adviser on family policy in a ministry or an international organisation, who must decide which "
+              "measures to recommend. Judge whether the paper gives clear, usable recommendations, whether each rests "
+              "on evidence strong enough for what it asks, and whether a reader outside the field can follow it. "
+              "Penalise overclaiming, and penalise just as much a paper so hedged that it leaves nothing to act on.",
+    "editor": "the editor of a journal that publishes argued essays at the meeting of science and policy, for "
+              "readers outside the field. Judge whether the paper makes one clear argument a reader can carry away, "
+              "whether its concepts are well chosen and used consistently, whether it meets the strongest objection at "
+              "full strength, whether its examples are vivid and representative of the evidence, and whether every "
+              "claim is earned by the evidence it cites. Penalise a paper that reads like an inventory of studies as "
+              "much as one that claims more than its evidence.",
 }
 
 SCHEMA = """
@@ -908,6 +925,11 @@ def table_items(store: Store, run_id: int, protocol: dict) -> list[dict]:
         if "strata" in L:
             parts.append(("strata", "main", rulemap.strata_table(store, run_id, protocol, L["strata"])))
         parts.append(("studies", "supplement", rulemap.studies_list(store, run_id, protocol, L["studies"])))
+    elif (protocol.get("aim") or {}).get("kind") == "strong":
+        # the strongest studies with their effects in the main text, every candidate's appraisal in the supplement
+        from . import strong
+        parts += [("effects", "main", strong.effects_table(store, run_id, protocol, L["effects"])),
+                  ("appraisals", "supplement", strong.appraisal_table(store, run_id, protocol, L["appraisals"]))]
     elif protocol.get("aim"):
         from . import aim
         if "outcomes_aim" in L:
@@ -1251,8 +1273,13 @@ def paper_input(store: Store, run_id: int, protocol: dict) -> dict:
         # A focused paper: only the findings that bear on the aim, and the facts that say how they were chosen.
         # (The aim may be one of several: write_task passes the protocol with the chosen aim as its [aim].)
         from . import aim
-        keep = {r["finding_id"] for r in aim.aim_rows(store, run_id, protocol)}
-        data["findings"] = [f for f in data["findings"] if f["id"] in keep]
+        if protocol["aim"].get("kind") == "strong":     # the estimates read from the strongest studies
+            from . import strong
+            data["findings"] = strong.writer_findings(store, run_id, protocol)
+            keep = {f["id"] for f in data["findings"]}
+        else:
+            keep = {r["finding_id"] for r in aim.aim_rows(store, run_id, protocol)}
+            data["findings"] = [f for f in data["findings"] if f["id"] in keep]
         works = {str(f["work_id"]) for f in data["findings"]}
         data["studies"] = {w: s for w, s in data["studies"].items() if w in works}
         data["insights"] = [i for i in data["insights"] if not i.get("findings") or set(i["findings"]) & keep]
@@ -1322,6 +1349,10 @@ def _aim_parts(protocol: dict) -> list[str]:
             "evidence: each component carries its strength, and its predicted effects are what the evaluation would "
             "test.",
         ]
+    if a.get("kind") == "focus" and a.get("layout") == "policy":
+        return _policy_parts(protocol)
+    if a.get("kind") in ("focus", "strong") and a.get("layout") == "essay":
+        return _essay_parts(protocol)
     if a.get("kind") == "focus":
         rules = ", ".join(str(r).replace("_", " ") for r in (protocol.get("focus") or {}).get("rules") or [])
         sens = bool((protocol.get("focus") or {}).get("sensitivity"))
@@ -1465,6 +1496,165 @@ def _aim_parts(protocol: dict) -> list[str]:
     ]
 
 
+def _policy_parts(protocol: dict) -> list[str]:
+    a = protocol["aim"]
+    return [
+        f"This paper is a short policy review: {' '.join(str(a.get('question', '')).split())} Its readers: "
+        f"{a.get('audience', 'people who must decide')}. The findings in batch_01.json are the verified findings of "
+        "the focused evidence (method facts A0-A5); Table 1 (T1) gives, per rule and context, the studies' directions "
+        "with a verdict and the test of ancestral-like against modern contexts. The other tables are in the "
+        "supplement; cite them (S ids) only where a lesson needs a number they alone give. It is not a data analysis: "
+        "the evolutionary account is the lens through which the evidence is read, and the paper's value is what "
+        "readers and institutions can do with it. Cut the literature to what the lens needs.",
+        "",
+        "Lead with the majority. State each result as what most studies show, in its own direction (\"more schooling "
+        "went with fewer or later births in most modern studies\"), and give the exceptions after it, never the "
+        "exceptions first. The test between contexts comes after the majority, in one sentence.",
+        "",
+        "Parts to write: `title` (states the practical message, not 'a review'); `abstract` (150-200 words, one "
+        "paragraph, plain words: the problem, the lens, the three lessons with their main numbers, what to do); "
+        "`keywords` (4-6); `sections` named Key points, Introduction, Lessons, Recommendations, Limits, Method and "
+        f"Conclusion, {a.get('words', '3,500 to 4,500')} words in all:",
+        "- Key points (4-5 paragraphs, each one sentence a non-specialist can grasp, with its number of studies): "
+        "the lessons and what follows from them.",
+        "- Introduction (400-600 words): why low fertility matters to societies, why familiar policies often move it "
+        "little, and the lens: decision rules that evolved to read cues of readiness, status and help, now fed modern "
+        "inputs; what the lens lets one see that a list of correlates does not. Cite only the background sources; "
+        "no survey of the literature.",
+        "- Lessons (1,500-2,000 words): one block with a `heading` per rule (readiness, status, kin help), the "
+        "heading a lesson in plain words. Each block: the majority result first with its numbers (T1), the two or "
+        "three strongest studies by name and design (natural experiments, reforms, long panels, historical "
+        "genealogies), what the lens explains about the result, for whom it holds (sexes, kin types, timing against "
+        "number of children), and the exceptions. Figure 1 and Table 1 are printed after this section.",
+        "- Recommendations (500-800 words): one paragraph per recommendation, ranked by the strength of its evidence: "
+        "what to do, who acts (governments, employers, universities, families), why (the lesson and the rule it works "
+        "with) and what to expect. Then set them out in `model_table`, printed after this section as Table 2: "
+        "{\"caption\": \"...\", \"rows\": [{\"component\": \"the action\", \"change\": \"who acts and how\", \"why\": "
+        "\"the lesson and the rule in one sentence\", \"performance\": \"the expected effect on births (timing or "
+        "number)\", \"wellbeing\": \"other effects to watch (equity, careers, well-being)\", \"strength\": \"the "
+        "evidence with its number of studies and designs\", \"test\": \"how to evaluate it\", \"adopt\": \"act now, or "
+        "pilot and evaluate\", \"cites\": [finding ids], \"tables\": [\"T1\"], \"background\": [\"B9\"]}]}: 3 to 7 rows; "
+        "each row is checked like a sentence (every number in its cells must be in what it cites, and it must cite "
+        "something). A recommendation resting on causal designs may say what a policy would change; one resting on "
+        "associations says what to pilot and evaluate.",
+        "- Limits (300-450 words): what the evidence does not show, in one place: mostly associations; vote counts of "
+        "studies, not pooled effects; studies treated as independent; ancestral evidence mostly observational; "
+        "economic and cultural accounts predict much of the same; codes by language models, checked against passages "
+        "and in part by a person (A5); studies read from abstracts.",
+        "- Method (200-300 words): how the evidence was found, selected, coded, verified and counted, citing the "
+        "method facts; the full method and tables are in the supplement.",
+        "- Conclusion (100-200 words): the message in plain words.",
+        "",
+        "Tone: plain and direct, for readers outside the field; strong where the evidence is strong, with the "
+        "strength in a clause, not in hedges in every sentence. No jargon without a gloss in the same sentence.",
+    ]
+
+
+def _essay_parts(protocol: dict) -> list[str]:
+    a = protocol["aim"]
+    strong = a.get("kind") == "strong"      # the strongest studies read for their effects, not counts of directions
+    return [
+        f"This paper is an argued essay built on evidence: {' '.join(str(a.get('question', '')).split())} Its "
+        f"readers: {a.get('audience', 'people who must decide')}. "
+        + ("The findings in batch_01.json are the estimates read from the strongest studies, selected by design under "
+           "a rule fixed before any effect was read (method facts A0-A5): each states what changed, by how much and "
+           "for whom, with the passage it rests on. Table 1 (T1) lists those studies by rule, with what changed, the "
+           "design and the main estimates; " + tables.table_labels(protocol).get("appraisals", "a supplementary table")
+           + " in the supplement gives every candidate's appraisal. The "
+           "paper rests on these studies alone: no counts of directions across studies and no comparison of "
+           "ancestral-like with modern contexts. Effects are reported in the studies' own units (years of delay, "
+           "children per woman, percentage points), never converted or pooled, and the paper says where they differ "
+           "in kind (timing against number of children, intentions against births)."
+           if strong else
+           "The findings in batch_01.json are the verified findings of the focused evidence (method facts A0-A5); "
+           "Table 1 (T1) gives, per rule and context, the studies' directions with a verdict and the test of "
+           "ancestral-like against modern contexts. The other tables are in the supplement; cite them (S ids) only "
+           "where a claim needs a number they alone give."),
+        "",
+        "It must read as one argument, not as a data analysis or an inventory of studies. The evolutionary account is "
+        "the lens through which the evidence is read; the paper's value is what readers and institutions can see and "
+        "do because of it. Its model is an essay that opens on a concrete case, names the few concepts that carry its "
+        "thesis, meets the strongest objection at full strength and turns it, tells a handful of studies as stories "
+        "of what happened to whom, and ends where it began, with the case now understood.",
+        "",
+        "Parts to write: `title` (a claim a reader remembers, optionally with a subtitle after a colon; not 'a "
+        "review'); `abstract` (150-220 words, one paragraph: the thesis first, then the lens, the three results with "
+        "their main numbers, what follows, and what would refute it); `keywords` (4-6); `sections` named Diagnosis, "
+        "Argument, What follows, What would show this wrong, Conclusion and Method, in that order, "
+        f"{a.get('words', '4,000 to 5,500')} words in all. Give every section except Method a `title` that states "
+        "its claim in a few words (\"Diagnosis: ...\"); the Method is printed as an appendix.",
+        "- Diagnosis (500-800 words): open with one concrete case from the findings, told in a few plain sentences "
+        "(a reform, a population, what changed and what followed); then why it matters now (the background on low "
+        "fertility and on the small effects of familiar policies); then the thesis in two or three sentences and the "
+        "one to three concepts that carry it, each defined in one sentence when first used (coin a short name where "
+        "the literature has none, and use it the same way to the end); close with the route of the argument.",
+        "- Argument (1,800-2,400 words): one block with a `heading` per rule (readiness, status, kin help), the "
+        "heading a claim. Each block: what the rule reads and what modern life feeds it, in the essay's concepts; "
+        + ("what the strongest studies show, with their effects in their own units (T1 and the estimates): how large, "
+           "whether births came later, fewer or both, and how far each study can see (its horizon); where the studies "
+           "agree and where they differ, and why (design, setting, who is affected); "
+           if strong else "the majority result once, with its numbers (T1); ")
+        + "two or three studies told as what happened to whom (place, "
+        "time, design, what changed); for whom it holds; the strongest objection at full strength, including the "
+        "rival readings in the background sources (the economics of child quality, the second demographic "
+        "transition, gender equity, the diffusion of ideas), and the answer, or a plain admission where the lens "
+        "adds nothing; the exceptions; and a short closing line that says what the block has established.",
+        "- What follows (600-900 words): the recommendations, ranked by the strength of their evidence, one "
+        "paragraph each: what to do, who acts (governments, employers, universities, families), why (the concept and "
+        "the result it rests on) and what to expect. Then `model_table`, printed after this section as Table 2: "
+        "{\"caption\": \"...\", \"rows\": [{\"component\": \"the action\", \"change\": \"who acts and how\", \"why\": "
+        "\"the result and the rule in one sentence\", \"performance\": \"the expected effect on births (timing or "
+        "number)\", \"wellbeing\": \"other effects to watch (equity, careers, well-being)\", \"strength\": \"the "
+        "evidence with its number of studies and designs\", \"test\": \"how to evaluate it\", \"adopt\": \"act now, or "
+        "pilot and evaluate\", \"cites\": [finding ids], \"tables\": [\"T1\"], \"background\": [\"B9\"]}]}: 3 to 7 rows; "
+        "each row is checked like a sentence (every number in its cells must be in what it cites, and it must cite "
+        "something). A recommendation resting on causal designs may say what a policy would change; one resting on "
+        "associations says what to pilot and evaluate.",
+        "- What would show this wrong (350-550 words): the three or four claims the argument rests on, one paragraph "
+        "each: where the evidence stands, what result would refute the claim, and the study that would settle it. "
+        "Then, in one paragraph, what the evidence cannot show: "
+        + ("a few dozen studies chosen by design, mostly reforms in modern societies, so the evolutionary reading is a "
+           "lens and not a test; effects in different units, not pooled; reforms change more than one thing; published "
+           "studies lean towards clear effects; designs appraised and effects read by language models, the passages "
+           "checked in code but not by a person (A5)."
+           if strong else
+           "mostly associations; counts of studies, not pooled effects; ancestral evidence mostly observational; rival "
+           "accounts predict much the same; codes by language models, checked against passages and in part by a "
+           "person (A5)."),
+        "- Conclusion (200-350 words): return to the opening case, now read through the argument, and end on one "
+        "short sentence that carries the thesis.",
+        "- Method (250-400 words, printed as an appendix with Figure 1 and Table 1 after it): how the evidence was "
+        + ("found, how the candidates were appraised and the studies selected by the rule fixed before any effect was "
+           "read, and how the effects were read and checked, citing the method facts; "
+           if strong else "found, selected, coded, verified and counted, citing the method facts; ")
+        + "that the review was AI-assisted, how, and what that limits; the full method and tables are in the "
+        "supplement.",
+        "",
+        "Style, which the reviewers will judge:",
+        ("- Be precise: every effect with its unit, its population and its horizon; say whether a result is about "
+         "the timing of births or their number, and never let a delay stand for a loss of births or the reverse."
+         if strong else
+         "- Lead with the majority: state each result as what most studies show, in its own direction, and give the "
+         "exceptions after it, never first."),
+        "- Give a claim's numbers once, where the claim is made; do not repeat them in the following sentences. No "
+        "p-values, odds ratios, confidence intervals or test statistics in the text: say in words what a test shows "
+        "and cite the table. Not every sentence needs a number.",
+        ("- Tell the studies well: the essay may name any study of Table 1 but tells about 15 to 25 of them with "
+         "enough of their story (who, where, when, what changed) to be remembered; the others are cited where they "
+         "agree or differ. Do not list studies in strings."
+         if strong else
+         "- Tell few studies, well: in all about 15 to 25 studies by name, each with enough of its story (who, where, "
+         "when, what changed) to be remembered. Do not list studies in strings."),
+        "- Short declarative sentences, one claim each, varied in length; paragraphs that build; no throat-clearing "
+        "('it is important to note'), no talk about the paper or the review outside Diagnosis and Method.",
+        "- Strong where the evidence is strong, with the strength in a clause, not in a hedge in every sentence; "
+        "plain about what the evidence cannot show, in its place.",
+        "- Signposts and a block's closing line may be framing sentences (`frame`: true) if they add no fact and no "
+        "number; every other sentence cites what it rests on as usual. No invented scenes, no personal anecdotes and "
+        "no quotation that is not a finding's verbatim passage.",
+    ]
+
+
 def paper_instructions(protocol: dict, revision: bool = False) -> str:
     p = protocol.get("paper") or {}
     lines = [
@@ -1472,7 +1662,8 @@ def paper_instructions(protocol: dict, revision: bool = False) -> str:
         "",
         (f"Write a complete, focused paper (an evidence synthesis that answers one aim) for "
          f"{p.get('target', 'a peer-reviewed journal')}. Cite Figure 1 and "
-         + (("Tables 1-3" if (protocol.get("focus") or {}).get("strata") else
+         + (("Table 1" if protocol["aim"].get("layout") in ACTION_LAYOUTS else
+             "Tables 1-3" if (protocol.get("focus") or {}).get("strata") else
              "Tables 1-2" if (protocol.get("focus") or {}).get("sensitivity") else "Table 1")
             if protocol["aim"].get("kind") == "focus" else "Tables 1-4")
          + " in the text; the supplementary tables (S...) are there for the record, and you need not read them."
@@ -1522,7 +1713,8 @@ def paper_instructions(protocol: dict, revision: bool = False) -> str:
         "- State evidence strength (number of studies, designs, abstract or full text). Present contradictions as "
         "contradictions.",
         *[f"- {' '.join(str(r).split())}" for r in p.get("rules") or []],
-        "- The Discussion must say plainly that the review was AI-assisted, how, and what that limits.",
+        "- The " + ("Method appendix" if (protocol.get("aim") or {}).get("layout") == "essay" else "Discussion")
+        + " must say plainly that the review was AI-assisted, how, and what that limits.",
         "",
         insights.instructions(),
         "",
@@ -1576,8 +1768,10 @@ def check_shape(paper, data) -> list[str]:
     names = [s.get("name") for s in paper.get("sections") or []]
     proposal = ((data or {}).get("aim") or {}).get("kind") == "proposal"
     general = ((data or {}).get("aim") or {}).get("kind") == "effectiveness"
+    layout = ((data or {}).get("aim") or {}).get("layout")
+    policy = layout in ACTION_LAYOUTS
     rows = (paper.get("model_table") or {}).get("rows") or []
-    if proposal or (general and rows):           # a general paper's table of recommendations is optional
+    if proposal or policy or (general and rows):     # a general paper's table of recommendations is optional
         if not (4 if proposal else 3) <= len(rows) <= 9:
             errs.append(f"the {'model' if proposal else 'recommendations'} table needs "
                         f"{4 if proposal else 3} to 9 rows, not {len(rows)}")
@@ -1587,7 +1781,8 @@ def check_shape(paper, data) -> list[str]:
                 errs.append(f"model table row {i}: needs {missing}")
             if not (row.get("cites") or row.get("tables") or row.get("background")):
                 errs.append(f"model table row {i}: cites nothing")
-    for need in (PROPOSAL_SECTIONS if proposal else
+    for need in (PROPOSAL_SECTIONS if proposal else ESSAY_SECTIONS if layout == "essay" else
+                 POLICY_SECTIONS if policy else
                  SECTIONS + (("Method",) if (data or {}).get("aim") else ())):
         if need not in names:
             errs.append(f"section {need} is missing")
@@ -1625,7 +1820,7 @@ def verify(paper: dict, data: dict, store: Store) -> dict:
         else:
             if not (cites or b_ids or m_ids or t_ids):
                 problems.append("states something but cites nothing")
-            if sec in ("Results", "Evidence") and not (cites or t_ids):
+            if sec in ("Results", "Evidence", "Lessons", "Argument") and not (cites or t_ids):
                 problems.append(f"a {sec} sentence without a finding or table")
             for bad, kind in (([c for c in cites if c not in findings], "findings"),
                               ([b for b in b_ids if b not in bg], "background sources"),
@@ -1742,7 +1937,12 @@ def render(store: Store, paper_id: int, full: bool = True) -> str:
                     relabel[stored[key]] = new
                     stored[key] = new
 
-    def sentence(sec, p_i, s_i, s):
+    essay = method.get("aim_layout") == "essay"
+
+    def sentence(sec, p_i, s_i, s, seen=None):
+        """seen: the labels the sentence before printed, which an essay does not print again in the next one (the
+        sentence still cites them in the record, and the check and audit still use them). Only the sentence before:
+        a label kept back further would leave a study's own sentence bare after a sentence that sums up several."""
         text = s["text"].strip()
         labels = []
         for c in s.get("cites") or []:
@@ -1758,6 +1958,13 @@ def render(store: Store, paper_id: int, full: bool = True) -> str:
             lab = table_label(t)
             if lab and lab not in text and lab not in labels:
                 labels.insert(0, lab)
+        if essay and sec == "Abstract":     # an essay's abstract, like a journal's, prints no citations
+            labels = []
+        if seen is not None:
+            shown, labels = [lab for lab in labels if lab not in seen], labels
+            seen.clear()
+            seen.update(labels)
+            labels = shown
         if labels:
             end = text[-1] if text[-1:] in ".!?" else ""
             text = f"{text[:-1] if end else text} ({'; '.join(labels)}){end}"
@@ -1770,7 +1977,9 @@ def render(store: Store, paper_id: int, full: bool = True) -> str:
     authors = "; ".join(author_line(a) for a in (protocol.get("paper") or {}).get("authors") or method.get("authors")
                         or ["(author)"])
     out = [f"# {paper['title']}", "", f"**Authors:** {authors}", ""]
-    out += ["**Declaration of AI use:** " + checks.declaration(store, row, protocol, ver.get("totals", {})), ""]
+    ai_use = "**Declaration of AI use:** " + checks.declaration(store, row, protocol, ver.get("totals", {}))
+    if not essay:                       # an essay opens on its argument; the declaration goes with the others
+        out += [ai_use, ""]
     out += ["## Abstract", ""]
     for p_i, p in enumerate(paper.get("abstract") or []):
         out += [(f"**{p['heading'].strip().rstrip('.:')}.** " if p.get("heading") else "")
@@ -1779,18 +1988,24 @@ def render(store: Store, paper_id: int, full: bool = True) -> str:
         out += [f"**Keywords:** {', '.join(paper['keywords'])}", ""]
     n = 0
     for sec in paper.get("sections") or []:
-        n += 1
-        out += [f"## {n}. {sec['name']}", ""]
+        title = " ".join(str(sec.get("title") or "").split()) or sec["name"]
+        if essay and sec["name"] == "Method":
+            out += [f"## Appendix: {title if sec.get('title') else 'The evidence review'}", ""]
+        else:
+            n += 1
+            out += [f"## {n}. {title}", ""]
         for p_i, p in enumerate(sec.get("paragraphs") or []):
             if p.get("heading"):
                 out += [f"### {p['heading']}", ""]
-            out += [" ".join(sentence(sec["name"], p_i, s_i, s) for s_i, s in enumerate(p["sentences"])), ""]
-        if method.get("aim") and sec["name"] == "Method":
+            seen = set() if essay else None
+            out += [" ".join(sentence(sec["name"], p_i, s_i, s, seen) for s_i, s in enumerate(p["sentences"])), ""]
+        if method.get("aim") and sec["name"] == ("Lessons" if method.get("aim_layout") == "policy" else "Method"):
             main = [t for t in method.get("tables") or [] if t.get("place") == "main"]
             main.sort(key=lambda t: (t["id"][:1] != "F", int(re.sub(r"\D", "", t["id"]) or 0)))   # Figure 1, Table 1, 2 ...
             out += [relabelled(t["text"]) + "\n" for t in main]
-        kind = method.get("aim_kind") or "proposal"
-        if sec["name"] == ("Discussion" if kind == "effectiveness" else "Proposal") \
+        kind = method.get("aim_layout") or method.get("aim_kind") or "proposal"
+        if sec["name"] == {"effectiveness": "Discussion", "policy": "Recommendations",
+                           "essay": "What follows"}.get(kind, "Proposal") \
                 and (paper.get("model_table") or {}).get("rows"):
             from . import aim as aim_mod
             label = tables.table_labels(aim_mod.with_aim(protocol, method.get("aim_id"))).get("model", "Table 5")
@@ -1803,7 +2018,7 @@ def render(store: Store, paper_id: int, full: bool = True) -> str:
                 out += [t["text"] + "\n" for t in placed if t["place"] != "supplement"]
             elif method.get("table"):
                 out += [method["table"], ""]
-    out += ["## Declarations", ""]
+    out += ["## Declarations", ""] + ([ai_use, ""] if essay else [])
     for key, head, default in DECLARATIONS:
         out += [f"**{head}.** " + (" ".join(str(stated[key]).split()) if stated.get(key) else default), ""]
     out += ["## References", ""]
@@ -1880,8 +2095,13 @@ MODEL_HEADS = {
     "proposal": ("Component", "What changes", "Why", "Expected effect on performance", "Expected effect on well-being",
                  "Strength of evidence", "How to test"),
     "effectiveness": ("Recommendation", "What it means in practice", "Why", "Effect on performance",
-                      "Effect on well-being", "Strength of evidence", "How to test")}
-MODEL_OPTIONAL_HEADS = {"effectiveness": {"adopt": "A firm recommendation or a design hypothesis"}}
+                      "Effect on well-being", "Strength of evidence", "How to test"),
+    "policy": ("Action", "Who acts and how", "Why", "Expected effect on births", "Other effects to watch",
+               "Strength of evidence", "How to evaluate")}
+MODEL_HEADS["essay"] = MODEL_HEADS["policy"]
+MODEL_OPTIONAL_HEADS = {"effectiveness": {"adopt": "A firm recommendation or a design hypothesis"},
+                        "policy": {"adopt": "Act now, or pilot and evaluate"},
+                        "essay": {"adopt": "Act now, or pilot and evaluate"}}
 
 
 def _model_table(table: dict, rows: dict, protocol_bg: dict, bg_cite: dict, bg_label: dict, label_of,
@@ -2081,7 +2301,7 @@ def write_task(store: Store, run_id: int, kind: str, agent: str, protocol: dict,
     from . import aim as aim_mod
     if kind == "paper":
         protocol = aim_mod.with_aim(protocol, options.get("aim"))
-    elif kind == "revise":
+    elif kind in ("revise", "peer", "meta"):       # reviewers judge the paper for the journal its aim names
         parent = options.get("paper") or _latest_id(store, run_id)
         prow = store.db.execute("SELECT method FROM papers WHERE paper_id = ?", (parent,)).fetchone() if parent else None
         protocol = aim_mod.with_aim(protocol, json.loads(prow["method"]).get("aim_id") if prow else None)
@@ -2337,7 +2557,7 @@ def import_task(folder: Path, store: Store, meta: dict, protocol: dict, instruct
                   "cite_labels": {str(w): lab for w, lab in tables.cite_map(store, run_id).items()},
                   "models": sorted({r["agent"] for r in _agents_used(store, run_id)} | {agent}),
                   "aim": bool(data.get("aim")), "aim_id": (data.get("aim") or {}).get("id"),
-                  "aim_kind": (data.get("aim") or {}).get("kind")}
+                  "aim_kind": (data.get("aim") or {}).get("kind"), "aim_layout": (data.get("aim") or {}).get("layout")}
         parent = meta.get("paper_id") if kind == "revise" else None
         version = 1 if parent is None else store.db.execute(
             "SELECT version FROM papers WHERE paper_id = ?", (parent,)).fetchone()["version"] + 1

@@ -79,6 +79,9 @@ def instructions(protocol: dict) -> str:
               "- The outcome is what is predicted or what changes; the predictor is what it is related to. In "
               "'X went with more Y', Y is the outcome and X the predictor, whatever the study is about.",
               "- The sign is about the relation between that predictor and that outcome, as the passage reports it.",
+              "- The sign is always what more of the predictor does. When the finding reports taking something away (a "
+              "reform that removes childcare, a loss of income), turn it round: if less help lowered fertility, more "
+              "help raises it.",
               "- Do not rewrite statements or passages, and use nothing but the batch.", "",
               "Output: one JSON object per batch, written to batch_NN_result.json:", "",
               "```json",

@@ -649,12 +649,21 @@ def table_labels(protocol: dict) -> dict[str, str]:
             out[role] = f"Table S{k}"
         if protocol["aim"].get("kind") == "focus":           # a hypothesis test: the evidence statements first
             out["statements"] = "Table 1"
-            if (protocol.get("focus") or {}).get("sensitivity"):
-                out["sensitivity"] = "Table 2"
-            if (protocol.get("focus") or {}).get("strata"):
-                out["strata"] = "Table 3" if "sensitivity" in out else "Table 2"
+            policy = protocol["aim"].get("layout") in ("policy", "essay")   # the other tests in the supplement
+            for role in ("sensitivity", "strata"):
+                if (protocol.get("focus") or {}).get(role):
+                    if policy:
+                        k += 1
+                        out[role] = f"Table S{k}"
+                    else:
+                        out[role] = "Table 3" if "sensitivity" in out else "Table 2"
+            if policy:
+                out["model"] = "Table 2"                     # the writer's recommendations
             k += 1
             out["studies"] = f"Table S{k}"
+            return out
+        if protocol["aim"].get("kind") == "strong":          # the strongest studies and their effects, then the actions
+            out.update(effects="Table 1", model="Table 2", appraisals=f"Table S{k + 1}")
             return out
         if protocol["aim"].get("kind") == "proposal":        # a redesign: the design choices first
             out.update(solutions="Table 1", outcomes_aim="Table 2", comparator="Table 3", patterns="Table 4",

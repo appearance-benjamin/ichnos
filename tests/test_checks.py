@@ -64,6 +64,29 @@ class HumanChecks(Papers):
         self.assertEqual(checked[0]["human_check"]["correction"], "Mood improved only in girls.")
         self.assertIn("`correction` is what the source says", (rev / "instructions.md").read_text(encoding="utf-8"))
 
+    def test_an_essay_prints_a_source_again_only_after_a_sentence_without_it(self):
+        f1, pid = self.write_paper()
+        row = self.store.db.execute("SELECT content, method FROM papers WHERE paper_id = ?", (pid,)).fetchone()
+        content, method = json.loads(row["content"]), json.loads(row["method"])
+        s = [{"text": t, "cites": [f1]} for t in ("Sleep went with mood.", "It did so in girls.")]
+        content["sections"] = [
+            {"name": "Argument", "title": "Argument: sleep carries mood", "paragraphs": [{"sentences": s + [
+                {"text": "Rivals agree.", "background": ["B1"]}, {"text": "Mood followed sleep.", "cites": [f1]}]}]},
+            {"name": "Method", "paragraphs": [{"sentences": [{"text": "Two studies.", "method": ["M1"]}]}]}]
+        self.store.db.execute("UPDATE papers SET content = ?, method = ? WHERE paper_id = ?",
+                              (json.dumps(content), json.dumps(dict(method, aim_layout="essay")), pid))
+        text = paper.render(self.store, pid, full=False)
+        para = next(line for line in text.splitlines() if line.startswith("Sleep went with mood"))
+        label = para[para.index("(") + 1:para.index(")")]
+        self.assertEqual(para.count(f"({label})"), 2)          # the first sentence and the last, not the second
+        self.assertIn("It did so in girls. Rivals", para)
+        self.assertIn("## 1. Argument: sleep carries mood", text)
+        abstract = text[text.index("## Abstract"):text.index("## 1.")]
+        self.assertIn("Mood improved as sleep lengthened.", abstract)
+        self.assertNotIn(f"({label})", abstract)
+        self.assertIn("## Appendix: The evidence review", text)
+        self.assertLess(text.index("## Declarations"), text.index("**Declaration of AI use:**"))
+
     def test_the_page_and_the_app_save_checks(self):
         f1, pid = self.write_paper()
         page = build_data(self.store, self.run)
