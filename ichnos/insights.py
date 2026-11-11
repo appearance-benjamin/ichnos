@@ -61,11 +61,12 @@ def check(items, known_works: set[int], known_findings: set[int] | None = None) 
             continue
         if it.get("kind") not in KINDS:
             errs.append(f"insight {i}: kind {it.get('kind')!r} not in {KINDS}")
-        bad = [w for w in it.get("works") or [] if _int(w) not in known_works]
+        # A model may write an id as an object or a list; such an id is wrong, not a crash.
+        bad = [w for w in _ids(it.get("works")) if not _known(w, known_works)]
         if bad:
             errs.append(f"insight {i}: works {bad} are not in this task")
         if known_findings is not None:
-            badf = [f for f in it.get("findings") or [] if _int(f) not in known_findings]
+            badf = [f for f in _ids(it.get("findings")) if not _known(f, known_findings)]
             if badf:
                 errs.append(f"insight {i}: finding ids {badf} do not exist in this run")
     return errs
@@ -267,3 +268,15 @@ def _int(x):
         return int(x)
     except (TypeError, ValueError):
         return x
+
+
+def _ids(value) -> list:
+    """The ids of an insight's `works` or `findings`: a list as given, a single value as a list of one."""
+    if value is None or value == "":
+        return []
+    return value if isinstance(value, list) else [value]
+
+
+def _known(x, known: set[int]) -> bool:
+    v = _int(x)
+    return isinstance(v, int) and not isinstance(v, bool) and v in known

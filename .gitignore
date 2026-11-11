@@ -23,3 +23,9 @@ imports/
 notes/
 writing/
 HANDOFF.md
+
+# Ichnos findings with their verbatim passages, written by models/labour-transition/export_ledger.py
+models/labour-transition/ledger.js
+
+# backups of .env hold the same API keys
+.env.before-*

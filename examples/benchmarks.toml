@@ -1,0 +1,60 @@
+# Validation benchmarks run unattended with local models.
+#   python -m ichnos benchmark run-plan examples/benchmarks.toml --dry-run      what each benchmark still needs
+#   python -m ichnos benchmark run-plan examples/benchmarks.toml                one pass (resumes where it stopped)
+#   python -m ichnos benchmark run-plan examples/benchmarks.toml --until-done   passes until all are scored
+# Results: output/benchmarks/<name>--<tag>.md, output/benchmarks/summary.md; log: output/benchmarks/runner.log.
+#
+# The question these runs answer: do the frozen protocols reach the same recall with open models of two different
+# families (Qwen, Gemma) as with Claude? Each benchmark is imported again under <name>--<tag>, so the Claude results
+# stay as they are and the two can be compared row by row in summary.md.
+#
+# A benchmark runs only if its protocol/corpus_<x>.toml exists: the criteria are read in the review and frozen by a
+# person before any model sees a record. Never edit a protocol after its first import; give a new version a new
+# corpus id.
+
+# An OpenAI-compatible server with the models below, e.g. Ollama on this machine.
+endpoint = "http://localhost:11434/v1"
+tag = "qg-nothink"         # part of each benchmark name (whole name max 41 chars): change it when the screeners or think change
+batch_size = 10          # records per prompt; 10 fits Ollama's 32k context with room for the answer
+parallel = 2             # batches at once: 2 on a large GPU (OLLAMA_NUM_PARALLEL=2), 1 on CPU
+timeout = 900            # seconds per answer
+retries = 2              # a failed answer is asked again with its problems named
+max_passes = 3           # rounds over failed batches within one pass over the plan
+think = false            # no reasoning phase: much faster (1 s instead of 20+ s on a short test).
+                         # true when there is more time; on CPU always false, or a batch takes far too long.
+                         # Recorded in each task's runner.json; compare runs only with the same setting.
+
+# Two model families, as two independent screeners (kept if either keeps a record).
+[[screeners]]
+label = "qwen3.8-27b-q8"
+model = "qwen3.8:27b-q8_0"
+
+[[screeners]]
+label = "gemma4-31b"
+model = "gemma4:31b"
+
+[[benchmarks]]
+name = "synergy-oud2018"
+corpus = "S1"
+labels = "data/benchmarks/synergy/labelled/Oud_2018.csv"
+source = "SYNERGY:Oud_2018@dc2dadf"
+
+[[benchmarks]]
+name = "synergy-vandervalk2021"
+corpus = "S3"
+labels = "data/benchmarks/synergy/labelled/van_der_Valk_2021.csv"
+source = "SYNERGY:van_der_Valk_2021@dc2dadf"
+
+[[benchmarks]]
+name = "synergy-vandeschoot2018"
+corpus = "S2"
+labels = "data/benchmarks/synergy/labelled/van_de_Schoot_2018.csv"
+source = "SYNERGY:van_de_Schoot_2018@dc2dadf"
+
+# Waits for its protocol (protocol/corpus_s4.toml, criteria read in JAMA Psychiatry 2020;77(3):265-273). Until then
+# the runner skips it and says why.
+[[benchmarks]]
+name = "synergy-vandis2020"
+corpus = "S4"
+labels = "data/benchmarks/synergy/labelled/van_Dis_2020.csv"
+source = "SYNERGY:van_Dis_2020@dc2dadf"

@@ -120,6 +120,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--timeout", type=int, default=900, help="seconds to wait for one answer")
     p.add_argument("--no-json-mode", action="store_true",
                    help="do not ask the server for JSON output (for servers that refuse response_format)")
+    p.add_argument("--no-think", action="store_true",
+                   help="reasoning models answer without a thinking phase (much faster, above all on CPU)")
 
     p = sub.add_parser("strong-select", help="apply a strong-evidence aim's selection rule to the appraised studies "
                                              "and list the selected studies without a full text")
@@ -173,6 +175,81 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--import-all", action="store_true", help="first import every answered task of the round")
     p.add_argument("--report", action="store_true", help="count and write the report instead of writing tasks")
 
+    p = sub.add_parser("board", help="the board: choose lanes for candidate directions, register and screen their "
+                                      "sources, get their full texts (protocol/board_<id>.toml)")
+    bsub = p.add_subparsers(dest="board_cmd", required=True)
+    b = bsub.add_parser("check", help="show the coverage matrix, the lanes code chooses and any gaps; writes nothing")
+    b.add_argument("file", type=Path)
+    b = bsub.add_parser("start", help="freeze the board file and open its run (after `check` is approved)")
+    b.add_argument("file", type=Path)
+    b.add_argument("--accept-gaps", metavar="WHY", help="start although coverage gaps remain; the reason is recorded")
+    b = bsub.add_parser("search", help="run the chosen lanes' search strings (logged; a query already run is skipped)")
+    b.add_argument("board")
+    b.add_argument("--lane")
+    b = bsub.add_parser("add-source", help="add a source a member found, with the search that found it")
+    b.add_argument("board")
+    b.add_argument("--lane", required=True)
+    b.add_argument("--query", required=True, help="the search that found it, as typed, or where it was found")
+    b.add_argument("--member", default="human:reviewer", help="who found it, e.g. M2 or human:reviewer")
+    b.add_argument("--doi")
+    b.add_argument("--work", type=int, help="a record already in the store")
+    b.add_argument("--title", help="for a source without a DOI OpenAlex knows")
+    b.add_argument("--year", type=int)
+    b.add_argument("--authors", help="semicolon-separated")
+    b.add_argument("--read-from", choices=["full text", "abstract", "summary", "title"])
+    b.add_argument("--label", help="a file name stem to save its PDF under, e.g. gale-1993-ajae")
+    b.add_argument("--want", action="store_true", help="request its full text as well")
+    b.add_argument("--note")
+    b = bsub.add_parser("screen", help="include or exclude a record in a lane's pool, with a reason")
+    b.add_argument("board")
+    b.add_argument("--lane", required=True)
+    b.add_argument("--work", type=int, required=True)
+    b.add_argument("--decision", choices=["include", "exclude"], required=True)
+    b.add_argument("--reason", required=True)
+    b.add_argument("--screener", default="human:reviewer")
+    b.add_argument("--read-from", choices=["full text", "abstract", "summary", "title"])
+    b = bsub.add_parser("want", help="request an included source's full text")
+    b.add_argument("board")
+    b.add_argument("--work", type=int, required=True)
+    b.add_argument("--label")
+    b.add_argument("--note")
+    b = bsub.add_parser("todo", help="write the list of included sources still without a full text")
+    b.add_argument("board")
+    b = bsub.add_parser("add-pdfs", help="match and parse the PDFs saved in fulltext/inbox/board")
+    b.add_argument("board")
+    b = bsub.add_parser("status", help="lanes, pools, screening, overlap between lanes, missing full texts")
+    b.add_argument("board")
+
+    p = sub.add_parser("benchmark", help="validate Ichnos against people: a review's labelled records (screening) or "
+                                          "its included studies (retrieval)")
+    bsub = p.add_subparsers(dest="bench_cmd", required=True)
+    b = bsub.add_parser("import-labels", help="a labelled set (title, abstract, doi, label) as a benchmark run of a "
+                                              "corpus whose protocol holds the review's criteria")
+    b.add_argument("corpus")
+    b.add_argument("file", type=Path)
+    b.add_argument("--name", required=True)
+    b.add_argument("--source", help="where the labels come from, e.g. SYNERGY:vandeSchoot2018")
+    b = bsub.add_parser("from-ids", help="a label file of ids only (SYNERGY's <review>_ids.csv) as a labelled set with "
+                                         "titles and abstracts from OpenAlex, for import-labels")
+    b.add_argument("file", type=Path)
+    b.add_argument("out", type=Path)
+    b = bsub.add_parser("reference", help="a review's included studies (doi or title), matched to an existing run")
+    b.add_argument("run", type=int)
+    b.add_argument("file", type=Path)
+    b.add_argument("--name", required=True)
+    b.add_argument("--source")
+    b = bsub.add_parser("score", help="score a benchmark and write output/benchmarks/<name>.md")
+    b.add_argument("name")
+    b = bsub.add_parser("run-plan", help="run every benchmark in a plan file unattended with local models: labels, "
+                                         "import, abstracts, screening, import, score (resumable)")
+    b.add_argument("plan", type=Path, nargs="?", default=Path("examples/benchmarks.toml"))
+    b.add_argument("--only", help="only this benchmark (its name in the plan)")
+    b.add_argument("--dry-run", action="store_true", help="say what each benchmark still needs, change nothing")
+    b.add_argument("--until-done", action="store_true",
+                   help="keep passing over the plan until every benchmark is scored (waits between passes)")
+    b.add_argument("--wait", type=int, default=600, help="seconds between passes with --until-done")
+    b = bsub.add_parser("summary", help="one table over every benchmark: output/benchmarks/summary.md")
+
     p = sub.add_parser("library", help="list the retained records without a full text, to download through your library")
     p.add_argument("run", type=int)
 
@@ -189,6 +266,8 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("pdf", help="write a manuscript as a journal-style PDF (needs Chrome or Edge)")
     p.add_argument("paper", type=int, help="paper id, as in the app's Paper tab")
     p.add_argument("--full", action="store_true", help="include the response to reviewers and the appendices")
+    p.add_argument("--changes", type=int, metavar="PAPER", help="also write a copy with the paragraphs changed "
+                                                                  "since that manuscript highlighted")
 
     p = sub.add_parser("desktop", help="open Ichnos in a window of its own (no console); it stops when "
                                         "the window closes")
@@ -401,7 +480,8 @@ def main(argv: list[str] | None = None) -> int:
             counts = run_task(args.folder, Store(settings.db_path),
                               RunSettings(endpoint, model, temperature=args.temperature, seed=args.seed,
                                           max_tokens=args.max_tokens, json_mode=not args.no_json_mode,
-                                          retries=args.retries, timeout=args.timeout, api_key=settings.llm_api_key),
+                                          retries=args.retries, timeout=args.timeout, api_key=settings.llm_api_key,
+                                          think=not args.no_think),
                               parallel=args.parallel, limit=args.limit)
         except RunnerError as err:
             parser.exit(1, f"agent-run: {err}\n")
@@ -595,6 +675,47 @@ def main(argv: list[str] | None = None) -> int:
               + (". Done: write the report with --report." if status["done"] else "."))
         for f in status["open"]:
             print(f"  open: {f}")
+    elif args.command == "board":
+        return _board(args, settings)
+    elif args.command == "benchmark":
+        from . import benchmark
+        store = Store(settings.db_path)
+        try:
+            if args.bench_cmd == "import-labels":
+                r = benchmark.import_labels(store, args.corpus, args.file, args.name, args.source, ROOT)
+                print(f"Benchmark {r['bench']}: run {r['run_id']}, {r['records']} records ({r['included']} included by "
+                      f"the review; {r['duplicates']} duplicates merged). The labels are kept apart from the agents. "
+                      f"Next: python -m ichnos agent-tasks screen {r['run_id']} --agent <model>")
+            elif args.bench_cmd in ("run-plan", "summary"):
+                from . import benchrun
+                if args.bench_cmd == "summary":
+                    print(f"Summary: {benchrun.write_summary(store, ROOT)}")
+                    return 0
+                plan = benchrun.load_plan(args.plan if args.plan.is_absolute() else ROOT / args.plan)
+                if args.until_done:
+                    rows = benchrun.run_until_done(plan, store, settings, ROOT, wait=args.wait)
+                else:
+                    rows = benchrun.run_plan(plan, store, settings, ROOT, only=args.only, dry_run=args.dry_run)
+                print("\n".join(f"{r['bench']}: {r['state']} {r['note']}" for r in rows))
+                print(f"Summary: {ROOT / 'output' / 'benchmarks' / 'summary.md'}; log: "
+                      f"{ROOT / 'output' / 'benchmarks' / 'runner.log'}")
+            elif args.bench_cmd == "from-ids":
+                from .http import Http
+                r = benchmark.from_ids(args.file, args.out, Http(store, None, max_retries=4),
+                                       settings.openalex_api_key, settings.contact_email)
+                print(f"{r['written']} of {r['rows']} records written to {r['file']} ({r['included']} included by the "
+                      f"review; {r['no_abstract']} without an abstract). Left out, no title found: "
+                      f"{r['lost']['include']} included, {r['lost']['exclude']} excluded.")
+            elif args.bench_cmd == "reference":
+                r = benchmark.import_reference(store, args.run, args.file, args.name, args.source)
+                print(f"Benchmark {r['bench']}: {r['studies']} included studies matched against run {r['run_id']} "
+                      f"({r['new_to_store']} were not in the store at all)")
+            else:
+                path = benchmark.write_report(store, args.name, ROOT)
+                print(f"Report: {path}")
+        except (ValueError, OSError) as err:
+            print(f"benchmark {args.bench_cmd}: {err}", file=sys.stderr)
+            return 1
     elif args.command in ("library", "add-pdfs"):
         from . import checks, library
         store = Store(settings.db_path)
@@ -638,6 +759,8 @@ def main(argv: list[str] | None = None) -> int:
             row = store.db.execute("SELECT method FROM papers WHERE paper_id = ?", (args.paper,)).fetchone()
             if row and json.loads(row["method"]).get("aim"):     # a focused paper's supplement is its own file
                 print(f"Supplement: {papers.write_supplement_pdf(store, args.paper, ROOT)}")
+            if args.changes:
+                print(f"Changes marked: {papers.write_changes_pdf(store, args.paper, ROOT, args.changes)}")
         except (RuntimeError, TypeError, subprocess.SubprocessError) as err:
             parser.exit(1, f"pdf: {err}\n")
     elif args.command == "desktop":
@@ -871,6 +994,63 @@ def main(argv: list[str] | None = None) -> int:
 
 def _log_path(corpus: str) -> Path:
     return ROOT / "notes" / f"insights_corpus_{corpus}.md"
+
+
+def _board(args, settings) -> int:
+    from . import board
+    cmd = args.board_cmd
+    try:
+        if cmd == "check":
+            _, cfg, _ = board.load(args.file)
+            errors = board.validate(cfg)
+            if errors:
+                print("The board file has problems:\n  " + "\n  ".join(errors))
+                return 1
+            print(board.plan_text(cfg, board.plan(cfg)))
+            return 0
+        store = Store(settings.db_path)
+        if cmd == "start":
+            r = board.start(store, args.file, ROOT, args.accept_gaps)
+            print(f"Board {r['board']} begun: run {r['run_id']}, lanes {', '.join(r['chosen'])}. The file is frozen; "
+                  f"next: python -m ichnos board search {r['board']}")
+        elif cmd == "search":
+            for r in board.search(store, args.board, settings, args.lane, root=ROOT):
+                print(f"  {r['lane']} {r['source']}: " + (f"{r['fetched']} of {r['reported_total']} fetched, {r['new']} "
+                                                          f"new to the lane" if r["status"] == "ok" else
+                                                          f"FAILED ({r['error']})"))
+        elif cmd == "add-source":
+            record = None
+            if args.title:
+                record = {"title": args.title, "year": args.year,
+                          "authors": [a.strip() for a in (args.authors or "").split(";") if a.strip()] or None}
+            w = board.add_source(store, args.board, args.lane, settings, args.member, args.query, doi=args.doi,
+                                 work_id=args.work, record=record, read_from=args.read_from, label=args.label,
+                                 note=args.note, root=ROOT)
+            if args.want:
+                board.want(store, args.board, w, root=ROOT)
+            print(f"#{w} included in lane {args.lane}" + (", full text requested" if args.want else ""))
+        elif cmd == "screen":
+            board.screen(store, args.board, args.lane, args.work, args.decision, args.reason, args.screener,
+                         args.read_from, ROOT)
+            print(f"#{args.work} {args.decision}d in lane {args.lane}")
+        elif cmd == "want":
+            board.want(store, args.board, args.work, args.note, args.label, ROOT)
+            print(f"#{args.work}: full text requested")
+        elif cmd == "todo":
+            path, n = board.write_todo(store, args.board, ROOT)
+            print(f"{n} included sources without a full text: {path}")
+        elif cmd == "add-pdfs":
+            c = board.add_pdfs(store, args.board, settings, ROOT)
+            print(f"Added {len(c['added'])} PDFs; {len(c['unmatched'])} matched no source "
+                  f"({', '.join(c['unmatched']) or 'none'}); {len(c['failed'])} failed")
+            for f in c["failed"]:
+                print(f"  {f}")
+        elif cmd == "status":
+            print(board.status_text(board.status(store, args.board, ROOT)))
+    except ValueError as err:
+        print(f"board {cmd}: {err}", file=sys.stderr)
+        return 1
+    return 0
 
 
 def _refresh(store: Store, run_id: int, out: Path | None = None) -> Path:

@@ -48,6 +48,23 @@ def search(http: Http, query: str, cap: int, api_key: str | None = None,
     return SearchResult(NAME, query, total, records[:cap])
 
 
+def works(http: Http, key: str, values: list[str], api_key: str | None = None,
+          contact_email: str | None = None, batch: int = 50) -> dict[str, dict]:
+    """Records for known works, `key` "openalex" (W ids) or "doi", 50 to a request; keyed by that value."""
+    out = {}
+    for i in range(0, len(values), batch):
+        chunk = values[i:i + batch]
+        params = {"filter": f"{key}:" + "|".join(chunk), "select": SELECT, "per_page": batch}
+        if api_key:
+            params["api_key"] = api_key
+        if contact_email:
+            params["mailto"] = contact_email
+        for w in http.get_json(NAME, URL, params).get("results", []):
+            rec = parse_work(w)
+            out[rec["openalex_id"] if key == "openalex" else rec["doi"]] = rec
+    return out
+
+
 def parse_work(w: dict) -> dict:
     ids = w.get("ids") or {}
     location = w.get("primary_location") or {}

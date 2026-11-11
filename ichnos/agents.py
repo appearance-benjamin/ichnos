@@ -541,10 +541,14 @@ def check_protocol(protocol: dict, kind: str) -> None:
 
 # Decisions from scores
 
-def decide(scores: dict[str, int], kind: str, metrics: list[dict]) -> tuple[str, str | None]:
-    """First metric scored 0, in protocol order, excludes; all 2 includes; anything else is unsure."""
+def decide(scores: dict[str, int], kind: str, metrics: list[dict], title_only: bool = False) -> tuple[str, str | None]:
+    """First metric scored 0, in protocol order, excludes; all 2 includes; anything else is unsure.
+    A metric with `exclude_on_title_only = false` cannot exclude a record that has only a title: its 0 counts as
+    "cannot tell" (the benchmark of 4 Nov 2026 lost a randomised trial titled "Naturalistic evaluation ...")."""
     for m in metrics:
         if scores.get(m["id"]) == 0:
+            if title_only and m.get("exclude_on_title_only", True) is False:
+                continue
             if kind == "review" and m.get("review_reason"):
                 return "exclude", m["review_reason"]
             return "exclude", m["fail_reason"]
@@ -678,8 +682,11 @@ def _import_task(folder: Path, store: Store) -> dict:
             {"agent": agent, "task": kind, "records": len(data) if isinstance(data, list) else len(data["studies"]),
              "protocol_sha256": meta["protocol_sha256"]},
         )
+        bare = set()        # records shown with a title only: no abstract, no full text
         if isinstance(data, list):
             texts = {int(r["work_id"]): _record_text(r) for r in data}
+            bare = {int(r["work_id"]) for r in data if not (r.get("abstract") or "").strip()
+                    and not (r.get("fulltext") or "").strip()}
         else:   # synthesis and writing see findings, so their quotes are checked against those passages
             texts = {}
             for f in data.get("findings", []):
@@ -695,7 +702,7 @@ def _import_task(folder: Path, store: Store) -> dict:
             if kind in ("screen", ELIGIBILITY):
                 rules = dict(protocol, screening=stage_rules(protocol, kind))
                 _store_screen(store, run, rules, agent, w, a, texts[w], call_id, counts,
-                              prefix=f"{ELIGIBILITY}:" if kind == ELIGIBILITY else "")
+                              prefix=f"{ELIGIBILITY}:" if kind == ELIGIBILITY else "", title_only=w in bare)
             elif kind == "extract":
                 _store_extract(store, run_id, protocol, agent, w, a, texts[w], call_id, counts,
                                second=bool(meta.get("second_coder")))
@@ -819,7 +826,7 @@ def recheck_quotes(folder: Path, store: Store) -> dict:
     return counts
 
 
-def _store_screen(store, run, protocol, agent, w, a, text, call_id, counts, prefix=""):
+def _store_screen(store, run, protocol, agent, w, a, text, call_id, counts, prefix="", title_only=False):
     """`prefix` keeps a later stage's scores apart from the title-and-abstract scores of the same metric ids."""
     metrics = protocol["screening"]["metrics"]
     scores = {}
@@ -831,7 +838,7 @@ def _store_screen(store, run, protocol, agent, w, a, text, call_id, counts, pref
         scores[m["id"]] = int(entry["score"])
         store.add_score(run["run_id"], w, agent, prefix + m["id"], scores[m["id"]], entry.get("evidence") or None, g,
                         call_id)
-    decision, reason = decide(scores, a.get("kind", "study"), metrics)
+    decision, reason = decide(scores, a.get("kind", "study"), metrics, title_only)
     store.add_screening(run["run_id"], w, run["corpus"], protocol["screening"]["stage"], agent, decision, reason,
                         a.get("note") or None, call_id)
 

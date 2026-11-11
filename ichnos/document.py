@@ -129,9 +129,26 @@ def _flow(stages: list[list[str]]) -> str:
     return "\n".join(out + ["</div>"])
 
 
-def to_html(markdown: str, title: str = "Manuscript", layout: str = "screen") -> str:
-    """layout "screen" for reading on a screen; "paper" for a journal-style page to print or save as PDF."""
+def paragraphs(markdown: str) -> set[str]:
+    """The text of each paragraph and list item, as to_html joins it: to tell which changed since a baseline."""
+    out, para = set(), []
+    for line in markdown.splitlines() + [""]:
+        if not line.strip() or line.startswith(("#", "|", "- ")):
+            if para:
+                out.add(" ".join(para))
+                para = []
+            if line.startswith("- "):
+                out.add(line[2:].strip())
+        else:
+            para.append(line.strip())
+    return out
+
+
+def to_html(markdown: str, title: str = "Manuscript", layout: str = "screen", baseline: str | None = None) -> str:
+    """layout "screen" for reading on a screen; "paper" for a journal-style page to print or save as PDF. With
+    `baseline` (an earlier version's Markdown), every paragraph not in it is marked as changed."""
     paper = layout == "paper"
+    before = paragraphs(baseline) if baseline is not None else None
     body, para, items = [], [], []
     section = [""]
 
@@ -152,6 +169,8 @@ def to_html(markdown: str, title: str = "Manuscript", layout: str = "screen") ->
                     cls = "caption"
                 elif section[0] == "Abstract":
                     cls = "abstract"
+            if before is not None and text not in before:
+                cls = (cls + " changed").strip()
             body.append((f'<p class="{cls}">' if cls else "<p>") + inline(text) + "</p>")
             para.clear()
         if items:
@@ -211,7 +230,8 @@ def to_html(markdown: str, title: str = "Manuscript", layout: str = "screen") ->
     flush()
     return ("<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\">"
             "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
-            f"<title>{html.escape(title)}</title><style>{(PAPER_STYLE if paper else STYLE) + FLOW_STYLE}</style>"
+            f"<title>{html.escape(title)}</title><style>{(PAPER_STYLE if paper else STYLE) + FLOW_STYLE}"
+            + (CHANGED_STYLE if before is not None else "") + "</style>"
             "</head><body><main>\n"
             + "\n".join(body) + "\n</main></body></html>\n")
 
@@ -237,14 +257,19 @@ def find_browser() -> str | None:
     return shutil.which("chrome") or shutil.which("msedge") or shutil.which("chromium")
 
 
-def to_pdf(markdown: str, title: str, out: Path) -> Path:
-    """Write `out` (a .pdf) from the paper layout, printed by a headless Chromium browser."""
+CHANGED_STYLE = (".changed{background:#fff3b0;border-left:3px solid #e0a800;padding-left:6px;"
+                 "-webkit-print-color-adjust:exact;print-color-adjust:exact}")
+
+
+def to_pdf(markdown: str, title: str, out: Path, baseline: str | None = None) -> Path:
+    """Write `out` (a .pdf) from the paper layout, printed by a headless Chromium browser; with `baseline`, the
+    paragraphs changed since it are highlighted."""
     browser = find_browser()
     if not browser:
         raise RuntimeError("no Chrome or Edge found to print the PDF; open the .html file and print it to PDF instead")
     out = Path(out).resolve()                  # the browser resolves a relative path against its own folder
     page = out.with_suffix(".print.html")
-    page.write_text(to_html(markdown, title, layout="paper"), encoding="utf-8")
+    page.write_text(to_html(markdown, title, layout="paper", baseline=baseline), encoding="utf-8")
     try:
         with tempfile.TemporaryDirectory() as profile:
             subprocess.run([browser, "--headless=new", "--disable-gpu", "--no-pdf-header-footer",

@@ -632,7 +632,56 @@ def focus_facts(store: Store, run_id: int, protocol: dict) -> list[dict]:
         "What no person checked: screening, eligibility, charting, findings and their verification were done by "
         "language-model agents (two independent models at screening and eligibility); every quote was checked in code "
         "against the record's text, but no person has checked the findings or the codes against the studies.")})
+    if (protocol.get("paper") or {}).get("guideline") == "PRISMA 2020":
+        out += _prisma_facts(store, run_id, protocol)
     return out
+
+
+def _prisma_facts(store: Store, run_id: int, protocol: dict) -> list[dict]:
+    """A6-A9, what a systematic review reports beyond the selection and the test (PRISMA 2020 items 11-15): the effect
+    measure and synthesis method, the appraisal of risk of bias, reporting biases and the grading of certainty."""
+    from .rulemap import bias_summary
+    L = tables.table_labels(protocol)
+    b = bias_summary(store, run_id, protocol)
+    words = lambda c: ", ".join(f"{_label(k)} {n}" for k, n in c.most_common())  # noqa: E731
+    full = store.db.execute("SELECT count(*) FROM study_appraisals WHERE run_id = ? AND read_from = 'full text'",
+                            (run_id,)).fetchone()[0]
+    rest = b["studies"] - b["appraised"]
+    pub = b["publication"]
+    ind = b["indexed"]
+    return [
+        {"id": "A6", "group": "Aim", "text": (
+            "Effect measure and synthesis method: the effect measure is the direction of each study's findings on a "
+            "rule (vote counting based on the direction of effect), because the studies measure different cues "
+            "(schooling, body condition or skill; occupation, prestige, income or wealth; different kin) against "
+            "different outcomes (completed fertility, rates, the timing of births, intentions, childlessness, "
+            "reproductive success) on scales that cannot be pooled; no effect sizes were extracted in a common metric "
+            f"and no meta-analysis was done. Directions are tabulated by rule and context ({L.get('statements', 'Table 1')}"
+            f"), heterogeneity is explored by the strata of {L.get('strata', 'Table 3')}, and robustness by the "
+            f"analytic choices of {L.get('sensitivity', 'Table 2')}.")},
+        {"id": "A7", "group": "Aim", "text": (
+            "Risk of bias: no formal risk-of-bias tool (such as RoB 2 or ROBINS-I) was applied. The design tier by "
+            "which each study entered (A1) enters the strength rule (A3), which requires at least half of a cell's "
+            f"studies to have a causal or longitudinal design for a strong verdict. On {', '.join(b['dates'])}, for "
+            "another article from the same evidence, a language-model agent appraised the "
+            f"{b['appraised']} focused studies with an experiment or natural experiment ({full} from full texts) on a "
+            "fixed rubric: the identification strategy, the source of variation, the publication status, the outcome, "
+            "the main threat to the design, and the passage that shows the design. Identification: "
+            f"{words(b['identification'])}; publication: {words(pub)}. The other {rest} studies were not appraised "
+            f"(by indexed publication type: {words(ind)}). No person checked the appraisals, and they did not weight "
+            f"the counts ({L.get('bias', 'the supplement')}).")},
+        {"id": "A8", "group": "Aim", "text": (
+            "Reporting biases were not assessed with a formal method; vote counts permit no funnel plot or test of "
+            "small-study effects. Unpublished work was searched for and included (among the appraised studies, "
+            f"{pub.get('working_paper', 0)} working papers and {pub.get('thesis', 0)} theses; among the others, "
+            f"{ind.get('dissertation', 0)} dissertations and {ind.get('preprint', 0)} preprints by indexed type), and "
+            f"{L.get('strata', 'Table 3')} compares studies read only from their abstracts with those read in full, "
+            "since abstracts may report results selectively.")},
+        {"id": "A9", "group": "Aim", "text": (
+            "Certainty: the certainty of the evidence was not graded with GRADE; the strength verdict of each evidence "
+            "statement (A3: strong, moderate, inconsistent or limited) serves as its grading, combining the number "
+            "of studies, the consistency of their directions and the share with a causal or longitudinal design. "
+            "The tests' results carry no separate grading.")}]
 
 
 def facts(store: Store, run_id: int, protocol: dict) -> list[dict]:

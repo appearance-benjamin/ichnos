@@ -56,6 +56,7 @@ class RunSettings:
     retries: int = 2                    # how often a failed answer is asked again
     timeout: int = 900                  # seconds for one answer
     api_key: str | None = None
+    think: bool = True                  # False: reasoning models answer without a thinking phase (reasoning_effort none)
 
 
 def run_task(folder: Path, store: Store, s: RunSettings, parallel: int = 1, limit: int | None = None,
@@ -181,6 +182,9 @@ def chat(s: RunSettings, messages: list[dict]) -> dict:
         body["max_tokens"] = s.max_tokens
     if s.json_mode:
         body["response_format"] = {"type": "json_object"}
+    if not s.think:
+        body["reasoning_effort"] = "none"                              # Ollama
+        body["chat_template_kwargs"] = {"enable_thinking": False}      # vLLM (Qwen's chat template)
     request = urllib.request.Request(s.endpoint.rstrip("/") + "/chat/completions",
                                      data=json.dumps(body).encode("utf-8"), headers=_headers(s))
     with urllib.request.urlopen(request, timeout=s.timeout) as response:

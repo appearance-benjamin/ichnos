@@ -915,7 +915,7 @@ def table_items(store: Store, run_id: int, protocol: dict) -> list[dict]:
     pp = protocol.get("paper") or {}
     only = core & contributing if pp.get("core_only") else None
     note = (lambda text: text + "\n\n" + tables.independent_note(ov, only).strip() if text and only else text)  # noqa: E731
-    parts = [("flow", "main", flow(store, run_id, elig, L))]
+    parts = [("flow", "main", flow(store, run_id, elig, L, protocol))]
     if (protocol.get("aim") or {}).get("kind") == "focus":
         # a hypothesis-testing paper: the evidence statements and the test in the main text, the studies in the supplement
         from . import rulemap
@@ -925,6 +925,8 @@ def table_items(store: Store, run_id: int, protocol: dict) -> list[dict]:
         if "strata" in L:
             parts.append(("strata", "main", rulemap.strata_table(store, run_id, protocol, L["strata"])))
         parts.append(("studies", "supplement", rulemap.studies_list(store, run_id, protocol, L["studies"])))
+        if "bias" in L:
+            parts.append(("bias", "supplement", rulemap.bias_table(store, run_id, protocol, L["bias"])))
     elif (protocol.get("aim") or {}).get("kind") == "strong":
         # the strongest studies with their effects in the main text, every candidate's appraisal in the supplement
         from . import strong
@@ -1127,8 +1129,13 @@ def _short(text: str, n: int) -> str:
     return text if len(text) <= n else text[: n - 1] + "…"
 
 
-def flow(store: Store, run_id: int, elig: list[dict] | None = None, labels: dict | None = None) -> str:
-    """Figure 1: the flow of records in the PRISMA-ScR stages, with the reasons for exclusion at each, from the store."""
+def flow(store: Store, run_id: int, elig: list[dict] | None = None, labels: dict | None = None,
+         protocol: dict | None = None) -> str:
+    """Figure 1: the flow of records in the PRISMA stages (PRISMA 2020 when `[paper] guideline` names it, else
+    PRISMA-ScR), with the reasons for exclusion at each, from the store; a focused paper's flow ends at the studies of
+    its synthesis."""
+    protocol = protocol or {}
+    prisma2020 = (protocol.get("paper") or {}).get("guideline") == "PRISMA 2020"
     from .agents import kept_ids, protocol_exclusions, screened_ids, sheet_ids
     db = store.db
     labels = labels or {}
@@ -1204,6 +1211,10 @@ def flow(store: Store, run_id: int, elig: list[dict] | None = None, labels: dict
         rows.append(("Eligibility", f"{len(passed) - len(out)} records kept",
                      f"{len(dropped)} excluded afterwards by decisions recorded in the protocol"
                      + (f" ({labels['exclusions']})" if labels.get("exclusions") else "")))
+    if prisma2020:
+        rows.append(("Retrieval", f"Full texts sought for the {len(kept)} retained records",
+                     f"{len(kept) - text['full text']} not retrieved (charted from "
+                     + ", ".join(f"{k} {n}" for k, n in text.most_common() if k != "full text") + ")"))
     rows.append(("Included", f"{len(kept)} records retained for charting ("
                  + ", ".join(f"{n} from {k}" for k, n in text.most_common()) + ")", "–"))
     if elig:
@@ -1217,8 +1228,17 @@ def flow(store: Store, run_id: int, elig: list[dict] | None = None, labels: dict
                         "abstract and wait for their full text" if potential else "")))
     rows.append(("Included", f"{len(with_f & kept_set)} records contributed at least one finding",
                  f"{len(kept_set - with_f)} yielded none ({labels.get('without', 'Table S4')})"))
-    lines = ["**Figure 1.** PRISMA-ScR flow diagram: the flow of records through the stages, with "
-             "the number excluded and the reasons "
+    if (protocol.get("aim") or {}).get("kind") == "focus":
+        from .rulemap import selection_flow
+        sf = selection_flow(store, run_id, protocol)
+        rows.append(("Included in the synthesis", f"{sf['included']} studies with {sf['findings']} findings on the "
+                     f"focused rules ({labels.get('studies', 'the list of studies')})",
+                     f"{sf['second']} second records of a study counted once; of the other studies with findings, "
+                     f"{sf['no_rule']} had no finding on a focused rule, {sf['no_direction']} no direction for a "
+                     f"fertility outcome on one, and {sf['design']} neither a causal design, longitudinal data with an "
+                     "evolutionary framing nor an explicit evolutionary test in a subsistence or historical population"))
+    lines = [f"**Figure 1.** {'PRISMA 2020 flow diagram (Page et al., 2021)' if prisma2020 else 'PRISMA-ScR flow diagram'}"
+             ": the flow of records through the stages, with the number excluded and the reasons "
              "at each stage (at title and abstract, the reason recorded by the criteria-scoring agent; at the "
              "eligibility stage, the reason the agents gave most often for each record).", "",
              "| Stage | Records | Excluded or set aside |", "| --- | --- | --- |"]
@@ -1228,8 +1248,12 @@ def flow(store: Store, run_id: int, elig: list[dict] | None = None, labels: dict
 
 def method_section(facts: list[dict], protocol: dict) -> str:
     p = protocol.get("paper") or {}
-    out = [f"This {p.get('kind', 'review')} followed the stages of Arksey and O'Malley (2005). It is reported "
-           f"following PRISMA-ScR (Tricco et al., 2018); the completed checklist is "
+    guide = ("PRISMA 2020 (Page et al., 2021), with the synthesis without meta-analysis following SWiM (Campbell et "
+             "al., 2020)" if p.get("guideline") == "PRISMA 2020" else "PRISMA-ScR (Tricco et al., 2018)")
+    stages = ("Its evidence map followed the stages of Arksey and O'Malley (2005); the " + p.get("kind", "review")
+              if p.get("guideline") == "PRISMA 2020" else f"This {p.get('kind', 'review')} followed the stages of "
+              "Arksey and O'Malley (2005). It")
+    out = [f"{stages} is reported following {guide}; the completed checklist is "
            f"{tables.table_labels(protocol)['prisma']}"
            + (f"; the protocol was registered ({p['registration']})." if p.get("registration") else
               ", and the protocol was not registered.")]
@@ -1286,6 +1310,43 @@ def paper_input(store: Store, run_id: int, protocol: dict) -> dict:
         data["method_facts"] = facts + aim.facts(store, run_id, protocol)
         data["aim"] = protocol["aim"]
     return data
+
+
+def _prisma_parts(protocol: dict) -> list[str]:
+    """What a focused paper reported as a systematic review must contain for the PRISMA 2020 checklist to be true."""
+    if (protocol.get("paper") or {}).get("guideline") != "PRISMA 2020" or (protocol.get("aim") or {}).get("kind") != \
+            "focus" or (protocol.get("aim") or {}).get("layout") in ("policy", "essay"):
+        return []
+    bg = {b["cite"]: b["id"] for b in protocol.get("background") or []}
+    page, swim, cochrane = (bg.get(c, "?") for c in ("Page et al., 2021", "Campbell et al., 2020",
+                                                     "McKenzie & Brennan, 2019"))
+    return [
+        "",
+        f"Reporting guideline: this paper is a systematic review reported following PRISMA 2020 ({page}), its "
+        f"synthesis without meta-analysis following SWiM ({swim}); the supplement's checklist says where each item is "
+        "reported, so the text must contain each of these (where they differ from the parts above, these win):",
+        "- `title` names the paper a systematic review (for example ': a systematic review with exploratory tests of "
+        "...'), still stating the main result.",
+        "- `abstract` covers PRISMA 2020 for Abstracts within its word limit: in Methods the eligibility criteria in "
+        "brief, the information sources with the date they were last searched, how risk of bias was appraised (A7) and "
+        "the synthesis method (A6); in Results the number of included studies with their main characteristics; in "
+        "Conclusions the main limitation of the evidence; a last sentence 'Registration: none; the protocol is "
+        "available from the author.'",
+        "- Method has blocks with these `heading`s, in this order: 'Search and selection' (with the date each source "
+        "was last searched), 'Extension of the evidence', 'Coding and verification', 'Synthesis method' (A6: the effect "
+        f"measure, why no meta-analysis, vote counting based on the direction of effect ({cochrane}; {swim}), how "
+        "studies were grouped and tabulated, the tests, and the strata and sensitivity analyses), 'Risk of bias, "
+        "reporting bias and certainty' (A7, A8, A9) and 'What was fixed when'. Cite the guideline once in the Method "
+        f"({page}). These may add up to 250 words to the Method.",
+        "- Results open with a block headed 'Study selection and characteristics' (150-250 words): how the records "
+        "narrowed to the included studies, with the reasons the other studies with findings were set aside (F1), the "
+        "studies' contexts, designs and the share read in full, and their risk-of-bias indicators (A7 and the "
+        "supplement's table of them).",
+        "- Discussion: the Limitations are two blocks, headed 'Limitations of the evidence' (the studies: designs, "
+        "observational ancestral evidence, abstracts, shared samples, no formal risk-of-bias tool, reporting biases) "
+        "and 'Limitations of the review process' (the review: language-model agents, no person's check, vote counts, "
+        "post hoc analyses, the extension after results were seen).",
+    ]
 
 
 def _aim_parts(protocol: dict) -> list[str]:
@@ -1688,7 +1749,7 @@ def paper_instructions(protocol: dict, revision: bool = False) -> str:
         "to survey the evidence, and check a finding's verbatim passage in batch_01.json before you rest a claim on "
         "it.",
         "",
-        *(_aim_parts(protocol) if protocol.get("aim") else [
+        *(_aim_parts(protocol) + _prisma_parts(protocol) if protocol.get("aim") else [
             "Parts to write: `title`; `abstract` (150-250 words" + ("; five paragraphs with `heading` Background, "
             "Objective, Methods, Results and Conclusions, the objective a full sentence" if p.get("structured_abstract")
             else ": background, objective, method, results, conclusions") + "); "
@@ -2020,6 +2081,8 @@ def render(store: Store, paper_id: int, full: bool = True) -> str:
                 out += [method["table"], ""]
     out += ["## Declarations", ""] + ([ai_use, ""] if essay else [])
     for key, head, default in DECLARATIONS:
+        if key == "registration" and (protocol.get("paper") or {}).get("registration"):
+            default = f"The protocol was registered ({protocol['paper']['registration']})."
         out += [f"**{head}.** " + (" ".join(str(stated[key]).split()) if stated.get(key) else default), ""]
     out += ["## References", ""]
     refs = []
@@ -2219,9 +2282,21 @@ METHOD_REFERENCES = [
                                                      "extension for scoping reviews (PRISMA-ScR): Checklist and "
                                                      "explanation. *Annals of Internal Medicine*, *169*(7), 467–473. "
                                                      "https://doi.org/10.7326/M18-0850"),
+    ("Page, M. J., McKenzie, J. E., Bossuyt, P. M., et al.", "Page, M. J., McKenzie, J. E., Bossuyt, P. M., et al. "
+                                                             "(2021). The PRISMA 2020 statement: An updated guideline "
+                                                             "for reporting systematic reviews. *BMJ*, *372*, n71. "
+                                                             "https://doi.org/10.1136/bmj.n71"),
+    ("Campbell, M., McKenzie, J. E., Sowden, A., et al.", "Campbell, M., McKenzie, J. E., Sowden, A., et al. (2020). "
+                                                          "Synthesis without meta-analysis (SWiM) in systematic "
+                                                          "reviews: Reporting guideline. *BMJ*, *368*, l6890. "
+                                                          "https://doi.org/10.1136/bmj.l6890"),
 ]
 
 DECLARATIONS = [
+    ("registration", "Registration and protocol", "The review was not registered. The protocol, every amendment with "
+                                                  "its date, who decided and why, and the instructions given to each "
+                                                  "agent are available from the author; the amendments are listed in "
+                                                  "the supplement."),
     ("data", "Data and materials", "The protocol, every prompt and agent answer, the evidence store and the extraction "
                                    "tables are available from the author; each claim can be traced to the passage it "
                                    "rests on."),
@@ -2267,6 +2342,17 @@ def write_pdf(store: Store, paper_id: int, root: Path, full: bool = False) -> Pa
     base.mkdir(parents=True, exist_ok=True)
     out = base / f"paper_{paper_id:02d}_v{row['version']}{'' if full else '_submission'}.pdf"
     return document.to_pdf(render(store, paper_id, full), row["title"] or "Manuscript", out)
+
+
+def write_changes_pdf(store: Store, paper_id: int, root: Path, against: int) -> Path:
+    """The submission with every paragraph changed since manuscript `against` highlighted, so a reader sees what a
+    revision round changed without rereading the whole paper."""
+    row = store.db.execute("SELECT * FROM papers WHERE paper_id = ?", (paper_id,)).fetchone()
+    base = root / "output" / f"corpus_{row['corpus']}" / f"run_{row['run_id']:03d}" / "papers"
+    base.mkdir(parents=True, exist_ok=True)
+    out = base / f"paper_{paper_id:02d}_v{row['version']}_changes.pdf"
+    return document.to_pdf(render(store, paper_id, False), row["title"] or "Manuscript", out,
+                           baseline=render(store, against, False))
 
 
 def write_supplement_pdf(store: Store, paper_id: int, root: Path) -> Path:

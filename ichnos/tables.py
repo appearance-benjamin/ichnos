@@ -661,6 +661,8 @@ def table_labels(protocol: dict) -> dict[str, str]:
                 out["model"] = "Table 2"                     # the writer's recommendations
             k += 1
             out["studies"] = f"Table S{k}"
+            if paper.get("guideline") == "PRISMA 2020":     # a systematic review reports each study's risk of bias
+                out["bias"] = f"Table S{k + 1}"
             return out
         if protocol["aim"].get("kind") == "strong":          # the strongest studies and their effects, then the actions
             out.update(effects="Table 1", model="Table 2", appraisals=f"Table S{k + 1}")
@@ -1055,10 +1057,66 @@ PRISMA_SCR = [
 ]
 
 
+# PRISMA 2020 (Page et al., 2021): the checklist for a systematic review, used when `[paper] guideline` names it. Each
+# item has a default place; `[paper.prisma_where]` gives a paper's own (by item number) where its sections differ.
+PRISMA_2020 = [
+    ("Title", "1", "Title", "Title (identifies the report as a systematic review)."),
+    ("Abstract", "2", "Abstract", "Abstract (structured, following PRISMA 2020 for Abstracts)."),
+    ("Introduction", "3", "Rationale", "Introduction."),
+    ("Introduction", "4", "Objectives", "Introduction: the last part; Abstract: Objective."),
+    ("Methods", "5", "Eligibility criteria", "Method; Supplementary method: Eligibility criteria; {studies}."),
+    ("Methods", "6", "Information sources", "Method; Supplementary method: Information sources and search (each "
+                                            "source and the date it was last searched)."),
+    ("Methods", "7", "Search strategy", "Supplementary method: Information sources and search (every string in full)."),
+    ("Methods", "8", "Selection process", "Method; Supplementary method: Selection of sources of evidence (agents, "
+                                          "independence, agreement, how disagreements were resolved)."),
+    ("Methods", "9", "Data collection process", "Method; Supplementary method: Data charting; Synthesis and use of AI."),
+    ("Methods", "10a", "Data items: outcomes", "Method; Supplementary method: Synthesis of results (the outcomes and "
+                                               "how each finding's direction was coded)."),
+    ("Methods", "10b", "Data items: other variables", "Supplementary method: Data charting (the charted dimensions)."),
+    ("Methods", "11", "Study risk of bias assessment", None),
+    ("Methods", "12", "Effect measures", None),
+    ("Methods", "13a", "Synthesis methods: eligibility for each synthesis", "Method; {studies}."),
+    ("Methods", "13b", "Synthesis methods: preparing data", "Method (one direction per study and context)."),
+    ("Methods", "13c", "Synthesis methods: tabulation and display", "Method; {counts}."),
+    ("Methods", "13d", "Synthesis methods: methods and rationale", "Method."),
+    ("Methods", "13e", "Synthesis methods: exploring heterogeneity", "Method; {strata}."),
+    ("Methods", "13f", "Synthesis methods: sensitivity analyses", "Method; {sensitivity}."),
+    ("Methods", "14", "Reporting bias assessment", "Method."),
+    ("Methods", "15", "Certainty assessment", "Method."),
+    ("Results", "16a", "Study selection", "Results; {flow}."),
+    ("Results", "16b", "Studies excluded that seemed to meet the criteria", "{flow}; {without} (retained records "
+                                                                             "without findings, with the reason)."),
+    ("Results", "17", "Study characteristics", "Results; {studies}."),
+    ("Results", "18", "Risk of bias in studies", "Results; {bias}."),
+    ("Results", "19", "Results of individual studies", "{studies} (direction per study and context); every finding "
+                                                       "with its verbatim passage is in the evidence store."),
+    ("Results", "20a", "Results of syntheses: characteristics and risk of bias", "Results; {counts}."),
+    ("Results", "20b", "Results of syntheses: statistical syntheses", "Results; {counts}."),
+    ("Results", "20c", "Results of syntheses: heterogeneity", "Results; {strata}."),
+    ("Results", "20d", "Results of syntheses: sensitivity analyses", "Results; {sensitivity}."),
+    ("Results", "21", "Reporting biases", "Results; {strata} (abstract-only against full-text studies)."),
+    ("Results", "22", "Certainty of evidence", "Results; {counts} (the strength verdict of each statement)."),
+    ("Discussion", "23a", "Interpretation", "Discussion."),
+    ("Discussion", "23b", "Limitations of the evidence", "Discussion: Limitations."),
+    ("Discussion", "23c", "Limitations of the review processes", "Discussion: Limitations."),
+    ("Discussion", "23d", "Implications", "Discussion: practical implications and research that would decide it."),
+    ("Other information", "24a", "Registration", None),
+    ("Other information", "24b", "Protocol", "Declarations: Registration and protocol."),
+    ("Other information", "24c", "Amendments", "Supplementary method: Protocol deviations (each amendment with its "
+                                               "date, who decided and why)."),
+    ("Other information", "25", "Support", None),
+    ("Other information", "26", "Competing interests", None),
+    ("Other information", "27", "Availability of data, code and other materials", "Declarations: Data and materials."),
+]
+
+
 def prisma_table(protocol: dict, labels: dict, label: str) -> str:
     """The completed checklist: each item with where this manuscript reports it, or that it was not done."""
     p = protocol.get("paper") or {}
     stated = p.get("declarations") or {}
+    if p.get("guideline") == "PRISMA 2020":
+        return _prisma_2020(protocol, labels, label)
     has = lambda role: role in labels  # noqa: E731
     fill = {"flow": labels["flow"],
             "characteristics": "; ".join(labels[r] for r in ("core", "summary", "sources", "subset_list") if has(r)),
@@ -1074,6 +1132,30 @@ def prisma_table(protocol: dict, labels: dict, label: str) -> str:
         elif n == "22":
             where = "Declarations: Funding" + ("." if stated.get("funding") else " (not yet stated by the author).")
         lines.append(f"| {section} | {n} | {topic} | {where.format(**fill)} |")
+    return "\n".join(lines)
+
+
+def _prisma_2020(protocol: dict, labels: dict, label: str) -> str:
+    p = protocol.get("paper") or {}
+    stated = p.get("declarations") or {}
+    own = {str(k): v for k, v in (p.get("prisma_where") or {}).items()}
+    pick = lambda *roles: "; ".join(labels[r] for r in roles if r in labels) or "–"  # noqa: E731
+    fill = {"flow": labels["flow"], "studies": pick("studies", "core", "subset_list"), "bias": pick("bias"),
+            "counts": pick("statements", *[k for k in labels if k.startswith("focus")]),
+            "strata": pick("strata"), "sensitivity": pick("sensitivity"), "without": pick("without")}
+
+    def declared(key, head):
+        return f"Declarations: {head}" + ("." if stated.get(key) else " (to be stated by the author).")
+    fixed = {"11": "Method; not done with a formal tool.",
+             "12": "Method: the direction of each study's findings (vote counting by direction of effect).",
+             "24a": ("Registered: " + p["registration"]) if p.get("registration") else
+                    "Not registered (Declarations: Registration and protocol).",
+             "25": declared("funding", "Funding"), "26": declared("competing_interests", "Competing interests")}
+    lines = [f"**{label}.** PRISMA 2020 checklist (Page et al., 2021): where this manuscript reports each item.", "",
+             "| Section | Item | Topic | Where reported |", "| --- | ---: | --- | --- |"]
+    for section, n, topic, where in PRISMA_2020:
+        text = own.get(n) or fixed.get(n) or where or "–"
+        lines.append(f"| {section} | {n} | {topic} | {' '.join(str(text).split()).format(**fill)} |")
     return "\n".join(lines)
 
 

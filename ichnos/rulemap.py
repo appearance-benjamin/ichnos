@@ -522,6 +522,97 @@ def studies_list(store: Store, run_id: int, protocol: dict, label: str) -> str:
     return "\n".join(lines)
 
 
+def selection_flow(store: Store, run_id: int, protocol: dict) -> dict:
+    """How the studies with findings narrow to the focused evidence, for the flow diagram: the studies with findings,
+    the second records of a study set aside, and for the rest the first step of the selection each fails."""
+    focus = protocol.get("focus") or {}
+    spec = protocol.get("findings") or {}
+    fields = {f["name"]: f for f in spec.get("fields") or []}
+    rule_ax, out_ax = [a for a in spec.get("matrix") or [] if a in fields][:2]
+    kept = set(kept_ids(store, run_id))
+    finds = [f for f in _findings(store, run_id) if f["work_id"] in kept]
+    feats = {w: d for w, d in _features(store, run_id).items() if w in kept}
+    with_f = {f["work_id"] for f in finds}
+    lead = same_study(store, run_id, with_f | set(feats), Counter(f["work_id"] for f in finds))
+    second = {w for w in with_f if lead.get(w, w) != w}
+    finds = [f for f in finds if f["work_id"] not in second]
+    chosen, _ = selection(store, run_id, protocol)
+    inside = {w for by_study in chosen.values() for w in by_study}
+    rules = set(focus.get("rules") or [])
+    directions = {d for d, _ in DIRECTIONS}
+    on_rule = {f["work_id"] for f in finds if rules & set(split_values(f["fields"].get(rule_ax, "")))}
+    directed = {f["work_id"] for f in finds if rules & set(split_values(f["fields"].get(rule_ax, "")))
+                and f["fields"].get(out_ax) != "other" and f["fields"].get("direction") in directions}
+    rest = with_f - second - inside
+    return {"with_findings": len(with_f), "second": len(second), "included": len(inside),
+            "findings": len(focus_finding_ids(store, run_id, protocol)),
+            "no_rule": len(rest - on_rule), "no_direction": len(rest & on_rule - directed),
+            "design": len(rest & directed)}
+
+
+def bias_table(store: Store, run_id: int, protocol: dict, label: str) -> str:
+    """Risk-of-bias indicators of each focused study: the design tier it entered by, the identification strategy, the
+    publication status and the main threat to its design as appraised (studies with an experiment or natural
+    experiment), and the text it was read from."""
+    from . import tables
+    chosen, _ = selection(store, run_id, protocol)
+    why = {}
+    for by_study in chosen.values():
+        for w, (r, _) in by_study.items():
+            why[w] = min(why.get(w, r), r)
+    works = tables.works(store, set(why), run_id)
+    full = {r["work_id"] for r in store.db.execute("SELECT work_id FROM fulltexts WHERE status = 'parsed'")}
+    ap = {}
+    for r in store.db.execute("SELECT work_id, content FROM study_appraisals WHERE run_id = ? ORDER BY created_at",
+                              (run_id,)):
+        try:
+            ap[r["work_id"]] = json.loads(r["content"])
+        except (TypeError, ValueError):
+            continue
+    ap = {w: a for w, a in ap.items() if w in why}
+    ident = Counter(_label(a.get("identification") or "not stated") for a in ap.values())
+    lines = [f"**{label}.** Risk-of-bias indicators of the {len(why)} focused studies: the design tier by which each "
+             "entered (a causal design; longitudinal data with an evolutionary framing; an explicit evolutionary test "
+             "in a subsistence or historical population); for the "
+             f"{len(ap)} studies with an experiment or natural experiment, the identification strategy, the publication "
+             "status and the main threat to the design as appraised by a language-model agent on a fixed rubric from the "
+             "passage that shows the design ("
+             + ", ".join(f"{k} {n}" for k, n in ident.most_common()) + "); for the others, the publication type "
+             "as indexed; and the text the study was read from. No formal risk-of-bias tool was applied, the "
+             "appraisals were not checked by a person, and they did not weight the counts.", "",
+             "| Study | Year | Entered by | Identification | Publication | Main threat to the design | Read from |",
+             "|---|---:|---|---|---|---|---|"]
+    tier = {"a": "causal design", "b": "longitudinal, evolutionary framing", "c": "explicit evolutionary test"}
+    for w in sorted(why, key=lambda x: (why[x], _cite(works, x).casefold())):
+        a = ap.get(w) or {}
+        threat = " ".join(str(a.get("threat") or "").split()).replace("|", "/")
+        threat = threat if len(threat) <= 200 else threat[:199] + "…"
+        lines.append(f"| {_cite(works, w)} | {works[w].get('year') or ''} | {tier[why[w]]} | "
+                     f"{_label(a['identification']) if a.get('identification') else 'not appraised'} | "
+                     f"{_label(a['publication']) if a.get('publication') else tables.kind_of(works[w])} | "
+                     f"{threat or '–'} | {'full text' if w in full else 'abstract'} |")
+    return "\n".join(lines)
+
+
+def bias_summary(store: Store, run_id: int, protocol: dict) -> dict:
+    """The counts behind the risk-of-bias fact: appraised studies by identification and publication status, and the
+    publication type of all focused studies as indexed."""
+    from . import tables
+    chosen, _ = selection(store, run_id, protocol)
+    ids = {w for by_study in chosen.values() for w in by_study}
+    ap = {}
+    for r in store.db.execute("SELECT work_id, content FROM study_appraisals WHERE run_id = ?", (run_id,)):
+        if r["work_id"] in ids:
+            ap[r["work_id"]] = json.loads(r["content"])
+    works = tables.works(store, ids, run_id)
+    return {"studies": len(ids), "appraised": len(ap),
+            "identification": Counter(a.get("identification") or "not_stated" for a in ap.values()),
+            "publication": Counter(a.get("publication") or "not_stated" for a in ap.values()),
+            "indexed": Counter(tables.kind_of(works[w]) for w in ids if w not in ap),
+            "dates": sorted({r[0][:10] for r in store.db.execute(
+                "SELECT created_at FROM study_appraisals WHERE run_id = ?", (run_id,))})}
+
+
 def _statements(rule: str, findings: list[dict], focus: dict, heading: bool = True) -> list[str]:
     """Per context: the studies' directions, the most common one, its share, the share with a strong design, and the
     verdict; then the mismatch test between ancestral and modern contexts."""

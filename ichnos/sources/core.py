@@ -27,12 +27,22 @@ def configure(http: Http, api_key: str | None) -> None:
 def same_work(work, hit: dict) -> bool:
     doi = normalize_doi(work["doi"])
     if doi and normalize_doi(hit.get("doi")) == doi:
-        return True
+        # Repository records sometimes carry a DOI they cite (a 2020 thesis tagged with the 2004 article it builds
+        # on, found 4 Nov 2026), so a DOI match counts only if the titles agree too, where both are known.
+        return titles_agree(work["title"], hit.get("title"))
     key = title_key(work["title"])
     if not key or len(key.split()) < MIN_TITLE_WORDS or title_key(hit.get("title")) != key:
         return False
     year, other = work["year"], hit.get("yearPublished")
     return not (year and other) or abs(int(year) - int(other)) <= 1
+
+
+def titles_agree(a: str | None, b: str | None, share: float = 0.6) -> bool:
+    """True if either title is missing, or most words of the shorter title are in the longer."""
+    wa, wb = set((title_key(a) or "").split()), set((title_key(b) or "").split())
+    if not wa or not wb:
+        return True
+    return len(wa & wb) / min(len(wa), len(wb)) >= share
 
 
 def find(http: Http, work, api_key: str | None = None) -> dict | None:

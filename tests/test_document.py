@@ -36,5 +36,15 @@ class FlowDiagram(unittest.TestCase):
         self.assertEqual(h.count("<table>"), 2)
 
 
+class ChangesMarked(unittest.TestCase):
+    def test_only_the_paragraphs_changed_since_the_baseline_are_marked(self):
+        before = "# Title\n\nFirst paragraph,\nkept.\n\nSecond paragraph.\n"
+        after = "# Title\n\nFirst paragraph,\nkept.\n\nSecond paragraph, revised.\n"
+        h = document.to_html(after, layout="paper", baseline=before)
+        self.assertEqual(h.count('class="changed"'), 1)
+        self.assertIn('<p class="changed">Second paragraph, revised.</p>', h)
+        self.assertNotIn("changed", document.to_html(after, layout="paper"))     # no baseline, nothing marked
+
+
 if __name__ == "__main__":
     unittest.main()
